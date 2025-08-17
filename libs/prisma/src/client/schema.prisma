@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./src/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserType {
+  CREATOR
+  EDITOR
+}
+
+model User {
+  id                  String    @id @default(uuid())
+  username            String
+  subId               String    @unique
+  email               String    @unique
+  createdAt           DateTime  @default(now())
+  type                UserType
+  youtubeAccessToken  String?
+  youtubeRefreshToken String?
+  youtubeExpiresAt    DateTime?
+
+  // opposite relations
+  creatorChats Chat[]    @relation("CreatorChats")
+  editorChats  Chat[]    @relation("EditorChats")
+  messages     Message[]
+}
+
+model Chat {
+  id        String    @id @default(uuid())
+  creatorId String
+  editorId  String
+  creator   User      @relation("CreatorChats", fields: [creatorId], references: [id])
+  editor    User      @relation("EditorChats", fields: [editorId], references: [id])
+  messages  Message[]
+  updatedAt DateTime  @updatedAt
+
+  @@unique([creatorId, editorId])
+  @@index([creatorId])
+  @@index([editorId])
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO_REQUEST
+}
+
+model Message {
+  id           String         @id @default(uuid())
+  chatId       String
+  chat         Chat           @relation(fields: [chatId], references: [id])
+  type         MessageType
+  text         String?
+  image        String[] // s3 id or filepath
+  video        String[] // s3 id or filepath
+  byId         String
+  by           User           @relation(fields: [byId], references: [id])
+  media        Media[]
+  videoRequest VideoRequest[] // if versioned
+  createdAt    DateTime       @default(now())
+}
+
+model Media {
+  id        String   @id @default(uuid())
+  url       String
+  type      String // IMAGE, VIDEO, THUMBNAIL
+  size      Int?
+  duration  Int?
+  createdAt DateTime @default(now())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id])
+}
+
+enum VideoRequestStatus {
+  PENDING
+  APPROVED
+  CHANGES_REQUESTED
+}
+
+model VideoRequest {
+  id          String             @id @default(uuid())
+  messageId   String
+  title       String
+  version     Int
+  description String
+  chatId      String
+  thumbnail   String // s3 id or filepath
+  video       String // s3 id or filepath
+  updatedAt   DateTime           @updatedAt
+  status      VideoRequestStatus
+  createdAt   DateTime           @default(now())
+  message     Message            @relation(fields: [messageId], references: [id])
+}
