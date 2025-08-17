@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "outDir": "../../dist/libs/prisma",
+        "rootDir": "src",
+        "module": "CommonJS",
+        "target": "ES2023",
+    }
+}

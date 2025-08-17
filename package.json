@@ -20,12 +20,20 @@
     "test:e2e": "jest --config ./apps/server/test/jest-e2e.json",
     "prisma:generate": "npx prisma generate --schema=libs/prisma/schema.prisma",
     "prisma:migrate": "npx prisma migrate dev --schema=libs/prisma/schema.prisma",
-    "prisma:format": "npx prisma format --schema=libs/prisma/schema.prisma"
+    "prisma:format": "npx prisma format --schema=libs/prisma/schema.prisma",
+    "postbuild": "mkdir -p dist/apps/server/libs/prisma/src && cp -r libs/prisma/src/client dist/apps/server/libs/prisma/src/client"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/jwt": "^11.0.0",
     "@nestjs/platform-express": "^11.0.1",
+    "@types/cookie-parser": "^1.4.9",
+    "axios": "^1.11.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "cookie-parser": "^1.4.7",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },

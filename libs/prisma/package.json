@@ -1,8 +1,9 @@
 {
   "name": "@creatorsync/prisma",
   "version": "1.0.0",
+  "main": "src/client/index.js",
+  "types": "src/client/index.d.ts",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
