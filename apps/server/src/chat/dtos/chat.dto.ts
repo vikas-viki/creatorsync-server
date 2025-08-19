@@ -1,5 +1,4 @@
-import { MessageType } from "@creatorsync/prisma/client";
-import { IsEnum, IsString, Matches } from "class-validator";
+import { IsOptional, IsString, Matches } from "class-validator";
 
 export class AddNewChatDTO {
     @IsString()
@@ -7,12 +6,13 @@ export class AddNewChatDTO {
 }
 
 export class NewMessageDTO {
-    @IsEnum(MessageType)
-    type: MessageType;
     @IsString()
     chatId: string;
     @IsString()
     data: string; // either image/video uploaded url or text
+    @IsString()
+    @IsOptional()
+    messageId: string;
 }
 
 export type NewMessage = InstanceType<typeof NewMessageDTO>;
@@ -24,7 +24,7 @@ export class NewMediaDTO {
     })
     contentType: string;
     @IsString()
-    chatId: string
+    chatId: string;
 }
 
 export type NewMedia = InstanceType<typeof NewMediaDTO>;

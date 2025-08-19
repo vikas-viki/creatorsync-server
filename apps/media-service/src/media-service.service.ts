@@ -1,7 +1,8 @@
-import { S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post"
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class MediaServiceService implements OnModuleInit {
@@ -20,7 +21,7 @@ export class MediaServiceService implements OnModuleInit {
         })
     }
 
-    async getSignedUrl(key: string, contentType: string) {
+    async getSignedUrlForUpload(key: string, contentType: string) {
         const data = await createPresignedPost(this.s3, {
             Bucket: this.configService.get<string>("AWS_S3_BUCKET")!,
             Key: key,
@@ -32,6 +33,32 @@ export class MediaServiceService implements OnModuleInit {
             },
             Expires: 120
         })
+
+        return data;
+    }
+
+    async getSignedUrlForView(keys: string[]) {
+        const data: Record<string, string> = {};
+        const bucket = this.configService.get<string>("AWS_S3_BUCKET")!
+
+        await Promise.all(keys.map(async k => {
+            if (k.length == 0) {
+                data[k] = "";
+                return;
+            }
+            try {
+                const command = new GetObjectCommand({
+                    Bucket: bucket,
+                    Key: k
+                });
+
+                const signedUrl = await getSignedUrl(this.s3, command, { expiresIn: 60 * 2 });
+                data[k] = signedUrl;
+            } catch (err) {
+                console.error(`Failed to generate signed URL for key "${k}":`, err);
+                data[k] = "";
+            }
+        }));
 
         return data;
     }

@@ -1,17 +1,14 @@
-import { Body, Controller, Delete, Get, Inject, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Query, Request, UseGuards } from '@nestjs/common';
 import type { Request as HttpRequest } from "express";
 import { JwtAuthGuard } from '../../../../libs/prisma/src/guards/jwt.guard';
 import { ChatService } from './chat.service';
 import { AddNewChatDTO, NewMediaDTO, NewMessageDTO } from './dtos/chat.dto';
-import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
 export class ChatController {
 
     constructor(
-        @Inject("MEDIA_SERVICE") private client: ClientProxy,
         private chatService: ChatService) { }
 
     @Get('all')
@@ -25,14 +22,18 @@ export class ChatController {
     }
 
     @Get('')
-    getChatData() {
-
+    async getChatData(@Query('id') id: string, @Request() req: HttpRequest) {
+        return await this.chatService.getChatData(id, req.user!);
     }
 
-    @Post('signedUrl')
-    async getSignedUrl(@Body() data: NewMediaDTO, @Request() req: HttpRequest): Promise<string> {
-        const key = await this.chatService.getSignedUrl(data, req.user!);
-        return await firstValueFrom(this.client.send({ cmd: "signed_url" }, { key, contentType: data.contentType }));
+    @Post('message/media')
+    async mediaMessage(@Body() data: NewMediaDTO, @Request() req: HttpRequest): Promise<string> {
+        return await this.chatService.mediaMessage(data, req.user!);
+    }
+
+    @Get('message/media')
+    getMediaMessage(@Query('key') key: string) {
+        console.log(key);
     }
 
     @Post('')
@@ -40,9 +41,9 @@ export class ChatController {
         return await this.chatService.addNewChat(body.editorId, req.user!);
     }
 
-    @Post('/message')
+    @Post('message/text')
     async addNewMessage(@Body() body: NewMessageDTO, @Request() req: HttpRequest) {
-        return await this.chatService.addNewMessage(body, req.user!);
+        return await this.chatService.addTextMessage(body, req.user!);
     }
 
     @Post('videoRequest')
