@@ -159,10 +159,6 @@ export class ChatService {
         return { message: "Chat Deleted successfully" };
     }
 
-    // async getSignedUrlForView(key: string) {
-
-    // }
-
     async mediaMessage(data: NewMedia, user: GuardUser): Promise<string> {
         await this.checkIfUserChatFound(data.chatId, user);
 

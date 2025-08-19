@@ -1,4 +1,4 @@
-import { IsOptional, IsString, Matches } from "class-validator";
+import { IsString, Matches } from "class-validator";
 
 export class AddNewChatDTO {
     @IsString()
@@ -10,9 +10,6 @@ export class NewMessageDTO {
     chatId: string;
     @IsString()
     data: string; // either image/video uploaded url or text
-    @IsString()
-    @IsOptional()
-    messageId: string;
 }
 
 export type NewMessage = InstanceType<typeof NewMessageDTO>;
