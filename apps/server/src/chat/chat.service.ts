@@ -1,9 +1,9 @@
 import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '@creatorsync/prisma/prisma.service';
-import { Message, MessageType, UserType } from '@creatorsync/prisma/client';
+import { Message, MessageType, UserType, VideoRequestStatus } from '@creatorsync/prisma/client';
 import { UserChatsReponse } from '../user/user.types';
 import { UserService } from '../user/user.service';
-import { NewMedia, NewMessage } from './dtos/chat.dto';
+import { NewMedia, NewMessage, NewVideoRequest, VideoRequestResponse } from './dtos/chat.dto';
 import { GuardUser } from '@creatorsync/prisma/types';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
@@ -52,17 +52,43 @@ export class ChatService {
                 text: true,
                 videoRequest: {
                     select: {
-                        video: true
+                        video: true,
+                        thumbnail: true,
+                        title: true,
+                        description: true,
+                        version: true,
+                        status: true,
+                        createdAt: true
+                    },
+                    orderBy: {
+                        version: 'desc'
                     }
                 },
             },
             take: 30
         });
 
-        const messagesData: Record<string, string> = {};
+        const videoRequests = messages.filter(m => m.type == "VIDEO_REQUEST");
+        const videoRequestsData: Record<string, VideoRequestResponse> = {};
 
-        const keys = messages.filter(m => m.type !== "TEXT").map(m => {
-            const k = this.getContent(m.type, m as unknown as Message & { videoRequest?: { video: string } | null });
+        await Promise.all(videoRequests.map(async (v) => {
+            const data: { video: string, thumbnail: string, title: string, description: string, createdAt: Date, status: VideoRequestStatus, version: number } = v.videoRequest[0];
+
+            const signedUrls: Record<string, string> = await firstValueFrom(this.client.send({ cmd: 'signed_urls_view' }, { keys: [data.thumbnail, data.video] }));
+            videoRequestsData[v.id] = {
+                title: data.title,
+                description: data.description,
+                video: signedUrls[data.video],
+                thumbnail: signedUrls[data.thumbnail],
+                versions: data.version,
+                status: data.status,
+                createdAt: data.createdAt
+            }
+        }))
+
+        const messagesData: Record<string, string> = {};
+        const keys = messages.filter(m => m.type !== "TEXT" && m.type != "VIDEO_REQUEST").map(m => {
+            const k = this.getContent(m.type, m as unknown as Message);
 
             messagesData[m.id] = k;
             return k;
@@ -73,21 +99,18 @@ export class ChatService {
             senderId: m.byId,
             createdAt: m.createdAt,
             type: m.type.toLowerCase(),
-            content: m.type === "TEXT" ? m.text ?? "" : urls[messagesData[m.id]] ?? ""
+            content: m.type === "TEXT" ? m.text ?? "" : urls[messagesData[m.id]] ?? "",
+            ...(m.type == "VIDEO_REQUEST" ? { videoRequest: videoRequestsData[m.id] } : {})
         }))
 
         return data;
     }
 
-    getContent(type: MessageType, message: Message & { videoRequest?: { video: string } | null }): string {
+    getContent(type: MessageType, message: Message): string {
         if (type == "IMAGE") {
             return message.image[0] ?? "";
-        } else if (type == "VIDEO") {
-            return message.video[0] ?? "";
-        } else if (type == "VIDEO_REQUEST") {
-            return message.videoRequest?.video ?? ""
         } else {
-            return message.text || "";
+            return message.video[0] ?? "";
         }
     }
 
@@ -167,6 +190,8 @@ export class ChatService {
                 chatId: data.chatId,
                 byId: user.id,
                 type: isImage ? "IMAGE" : "VIDEO" as MessageType,
+                image: [""],
+                video: [""]
             }
         });
         const key = `chats/${data.chatId}/${isImage ? "image" : "video"}-${message.id}`;
@@ -194,8 +219,44 @@ export class ChatService {
         });
     }
 
-    addNewVideoRequest() {
+    async addNewVideoRequest(user: GuardUser, data: NewVideoRequest) {
+        await this.checkIfUserChatFound(data.chatId, user);
+        const message = await this.prisma.message.create({
+            data: {
+                chatId: data.chatId,
+                byId: user.id,
+                type: "VIDEO_REQUEST"
+            }
+        });
+        const videoRequest = await this.prisma.videoRequest.create({
+            data: {
+                chatId: data.chatId,
+                title: data.title,
+                description: data.description,
+                thumbnail: "",
+                video: "",
+                messageId: message.id,
+                version: 1,
+                status: VideoRequestStatus.PENDING
+            }
+        });
+        const thumbnailKey = `chats/${data.chatId}/${videoRequest.id}-thumbnail-${message.id}`;
+        const videoKey = `chats/${data.chatId}/${videoRequest.id}-video-${message.id}`;
 
+        await this.prisma.videoRequest.update({
+            where: {
+                id: videoRequest.id
+            },
+            data: {
+                thumbnail: thumbnailKey,
+                video: videoKey
+            }
+        })
+
+        const thumbnailSignedUrl = await firstValueFrom(this.client.send({ cmd: "signed_url_upload" }, { key: thumbnailKey, contentType: data.thumbnailType })) as unknown as string;
+        const videoSignedUrl = await firstValueFrom(this.client.send({ cmd: "signed_url_upload" }, { key: videoKey, contentType: data.thumbnailType })) as unknown as string;
+
+        return { thumbnailSignedUrl, videoSignedUrl };
     }
 
     async getChat(creatorId?: string, editorId?: string, chatId?: string) {

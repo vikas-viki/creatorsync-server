@@ -1,3 +1,4 @@
+import { VideoRequestStatus } from "@creatorsync/prisma/client";
 import { IsString, Matches } from "class-validator";
 
 export class AddNewChatDTO {
@@ -25,3 +26,32 @@ export class NewMediaDTO {
 }
 
 export type NewMedia = InstanceType<typeof NewMediaDTO>;
+
+export class NewVideoRequestDTO {
+    @IsString()
+    title: string;
+
+    @IsString()
+    description: string;
+
+    @IsString()
+    chatId: string
+
+    @IsString()
+    thumbnailType: string
+
+    @IsString()
+    videoType: string
+}
+
+export type NewVideoRequest = InstanceType<typeof NewVideoRequestDTO>;
+
+export type VideoRequestResponse = {
+    title: string,
+    description: string,
+    thumbnail: string,
+    video: string,
+    versions: number,
+    status: VideoRequestStatus
+    createdAt: Date
+}

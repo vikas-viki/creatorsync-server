@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Post, Query, Request, UseGuards } from '
 import type { Request as HttpRequest } from "express";
 import { JwtAuthGuard } from '../../../../libs/prisma/src/guards/jwt.guard';
 import { ChatService } from './chat.service';
-import { AddNewChatDTO, NewMediaDTO, NewMessageDTO } from './dtos/chat.dto';
+import { AddNewChatDTO, NewMediaDTO, NewMessageDTO, NewVideoRequestDTO } from './dtos/chat.dto';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -16,9 +16,9 @@ export class ChatController {
         return await this.chatService.getUserChats(req.user!.id, req.user!.type);
     }
 
-    @Get('videoRequest')
-    getVideoRequest() {
-
+    @Post('message/videoRequest')
+    async getVideoRequest(@Request() req: HttpRequest, @Body() data: NewVideoRequestDTO) {
+        return await this.chatService.addNewVideoRequest(req.user!, data);
     }
 
     @Get('')
