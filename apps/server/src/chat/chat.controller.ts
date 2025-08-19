@@ -1,14 +1,18 @@
-import { Body, Controller, Delete, Get, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Post, Query, Request, UseGuards } from '@nestjs/common';
 import type { Request as HttpRequest } from "express";
 import { JwtAuthGuard } from '../../../../libs/prisma/src/guards/jwt.guard';
 import { ChatService } from './chat.service';
-import { AddNewChatDTO, NewMessageDTO } from './dtos/chat.dto';
+import { AddNewChatDTO, NewMediaDTO, NewMessageDTO } from './dtos/chat.dto';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
 export class ChatController {
 
-    constructor(private chatService: ChatService) { }
+    constructor(
+        @Inject("MEDIA_SERVICE") private client: ClientProxy,
+        private chatService: ChatService) { }
 
     @Get('all')
     async getAllChats(@Request() req: HttpRequest) {
@@ -23,6 +27,12 @@ export class ChatController {
     @Get('')
     getChatData() {
 
+    }
+
+    @Post('signedUrl')
+    async getSignedUrl(@Body() data: NewMediaDTO, @Request() req: HttpRequest): Promise<string> {
+        const key = await this.chatService.getSignedUrl(data, req.user!);
+        return await firstValueFrom(this.client.send({ cmd: "signed_url" }, { key, contentType: data.contentType }));
     }
 
     @Post('')

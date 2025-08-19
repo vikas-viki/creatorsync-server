@@ -186,6 +186,7 @@ exports.UserType = exports.$Enums.UserType = {
 exports.MessageType = exports.$Enums.MessageType = {
   TEXT: 'TEXT',
   IMAGE: 'IMAGE',
+  VIDEO: 'VIDEO',
   VIDEO_REQUEST: 'VIDEO_REQUEST'
 };
 

@@ -1,9 +1,9 @@
 import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '@creatorsync/prisma/prisma.service';
-import { UserType } from '@creatorsync/prisma/client';
+import { MessageType, UserType } from '@creatorsync/prisma/client';
 import { UserChatsReponse } from '../user/user.types';
 import { UserService } from '../user/user.service';
-import { NewMessage } from './dtos/chat.dto';
+import { NewMedia, NewMessage } from './dtos/chat.dto';
 import { GuardUser } from '@creatorsync/prisma/types';
 
 @Injectable()
@@ -85,6 +85,28 @@ export class ChatService {
         }
 
         return { message: "Chat Deleted successfully" };
+    }
+
+    async getSignedUrl(data: NewMedia, user: GuardUser): Promise<string> {
+        const chat = await this.prisma.chat.findUnique({
+            where: {
+                id: data.chatId,
+                ...(user.type == "CREATOR" ? { creatorId: user.id } : { editorId: user.id })
+            }
+        });
+
+        if (!chat) {
+            throw new ForbiddenException("Chat not found!");
+        }
+
+        const message = await this.prisma.message.create({
+            data: {
+                chatId: data.chatId,
+                byId: user.id,
+                type: data.contentType.startsWith("image") ? "IMAGE" : "VIDEO" as MessageType
+            }
+        });
+        return `chats/${data.chatId}/${data.contentType.startsWith("image") ? "image" : "video"}-${message.id}`;
     }
 
     async addNewMessage(data: NewMessage, user: GuardUser) {

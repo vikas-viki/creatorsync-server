@@ -10,9 +10,9 @@ import { ConfigModule } from '@nestjs/config';
 import { ChatModule } from './chat/chat.module';
 @Module({
   imports: [
-    ConfigModule.forRoot({isGlobal: true}),
+    ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule, UserModule, AuthModule, ChatModule],
   controllers: [ServerController, AuthController],
   providers: [ServerService, AuthService],
 })
-export class ServerModule {}
+export class ServerModule { }

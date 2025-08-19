@@ -49,6 +49,7 @@ export type UserType = (typeof UserType)[keyof typeof UserType]
 export const MessageType: {
   TEXT: 'TEXT',
   IMAGE: 'IMAGE',
+  VIDEO: 'VIDEO',
   VIDEO_REQUEST: 'VIDEO_REQUEST'
 };
 

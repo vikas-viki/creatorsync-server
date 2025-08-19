@@ -4,11 +4,20 @@ import { ChatService } from './chat.service';
 import { AuthModule } from '../auth/auth.module';
 import { UserModule } from '../user/user.module';
 import { PrismaModule } from '@creatorsync/prisma/prisma.module';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   controllers: [ChatController],
   providers: [ChatService],
-  imports: [forwardRef(() => AuthModule), forwardRef(() => UserModule), PrismaModule],
+  imports: [
+    ClientsModule.register([
+      {
+        name: "MEDIA_SERVICE",
+        transport: Transport.TCP,
+        options: { host: 'localhost', port: 3001 }
+      }
+    ]),
+    forwardRef(() => AuthModule), forwardRef(() => UserModule), PrismaModule],
   exports: [ChatService]
 })
 export class ChatModule { }

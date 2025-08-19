@@ -47,6 +47,7 @@ model Chat {
 enum MessageType {
   TEXT
   IMAGE
+  VIDEO
   VIDEO_REQUEST
 }
 
