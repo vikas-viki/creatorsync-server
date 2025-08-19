@@ -80,7 +80,6 @@ export class ChatService {
     }
 
     getContent(type: MessageType, message: Message & { videoRequest?: { video: string } | null }): string {
-        console.log(type, message.image)
         if (type == "IMAGE") {
             return message.image[0] ?? "";
         } else if (type == "VIDEO") {

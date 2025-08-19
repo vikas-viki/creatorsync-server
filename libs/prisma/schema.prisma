@@ -85,3 +85,12 @@ model VideoRequest {
   createdAt   DateTime           @default(now())
   message     Message            @relation(fields: [messageId], references: [id], onDelete: Cascade)
 }
+
+model Feedback {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  userId    String
+  username  String
+  feedback  String?
+  feature   String?
+}

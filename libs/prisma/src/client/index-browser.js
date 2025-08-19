@@ -164,6 +164,15 @@ exports.Prisma.VideoRequestScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.FeedbackScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  userId: 'userId',
+  username: 'username',
+  feedback: 'feedback',
+  feature: 'feature'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -200,7 +209,8 @@ exports.Prisma.ModelName = {
   User: 'User',
   Chat: 'Chat',
   Message: 'Message',
-  VideoRequest: 'VideoRequest'
+  VideoRequest: 'VideoRequest',
+  Feedback: 'Feedback'
 };
 
 /**
