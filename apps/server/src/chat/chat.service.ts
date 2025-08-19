@@ -1,9 +1,10 @@
-import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '@creatorsync/prisma/prisma.service';
 import { UserType } from '@creatorsync/prisma/client';
 import { UserChatsReponse } from '../user/user.types';
-import { GuardUser } from '../auth/auth.types';
 import { UserService } from '../user/user.service';
+import { NewMessage } from './dtos/chat.dto';
+import { GuardUser } from '@creatorsync/prisma/types';
 
 @Injectable()
 export class ChatService {
@@ -86,8 +87,26 @@ export class ChatService {
         return { message: "Chat Deleted successfully" };
     }
 
-    addNewMessage() {
+    async addNewMessage(data: NewMessage, user: GuardUser) {
+        const chat = await this.prisma.chat.findUnique({
+            where: {
+                id: data.chatId,
+                ...(user.type == "CREATOR" ? { creatorId: user.id } : { editorId: user.id })
+            }
+        });
 
+        if (!chat) {
+            throw new ForbiddenException("Chat not found!");
+        }
+
+        await this.prisma.message.create({
+            data: {
+                chatId: chat.id,
+                type: data.type,
+                image: [data.data],
+                byId: user.id
+            }
+        });
     }
 
     addNewVideoRequest() {

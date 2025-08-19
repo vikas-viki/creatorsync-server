@@ -56,24 +56,12 @@ model Message {
   chat         Chat           @relation(fields: [chatId], references: [id], onDelete: Cascade)
   type         MessageType
   text         String?
-  image        String[] // s3 id or filepath
-  video        String[] // s3 id or filepath
+  image        String[] // s3 id or filepath/url
+  video        String[] // s3 id or filepath/url
   byId         String
   by           User           @relation(fields: [byId], references: [id])
-  media        Media[]
   videoRequest VideoRequest[] // if versioned
   createdAt    DateTime       @default(now())
-}
-
-model Media {
-  id        String   @id @default(uuid())
-  url       String
-  type      String // IMAGE, VIDEO, THUMBNAIL
-  size      Int?
-  duration  Int?
-  createdAt DateTime @default(now())
-  messageId String
-  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
 }
 
 enum VideoRequestStatus {

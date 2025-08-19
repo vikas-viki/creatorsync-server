@@ -150,16 +150,6 @@ exports.Prisma.MessageScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
-exports.Prisma.MediaScalarFieldEnum = {
-  id: 'id',
-  url: 'url',
-  type: 'type',
-  size: 'size',
-  duration: 'duration',
-  createdAt: 'createdAt',
-  messageId: 'messageId'
-};
-
 exports.Prisma.VideoRequestScalarFieldEnum = {
   id: 'id',
   messageId: 'messageId',
@@ -209,7 +199,6 @@ exports.Prisma.ModelName = {
   User: 'User',
   Chat: 'Chat',
   Message: 'Message',
-  Media: 'Media',
   VideoRequest: 'VideoRequest'
 };
 
