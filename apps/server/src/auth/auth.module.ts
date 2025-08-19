@@ -1,13 +1,16 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UserModule } from '../user/user.module';
 import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { JwtAuthGuard } from './guards/jwt.guard';
+import { PrismaModule } from '@creatorsync/prisma/prisma.module';
 
 @Module({
     imports: [
-        UserModule,
+        forwardRef(() => UserModule),
+        PrismaModule,
         JwtModule.registerAsync({
             imports: [ConfigModule],
             inject: [ConfigService],
@@ -18,7 +21,7 @@ import { AuthController } from './auth.controller';
         }),
     ],
     controllers: [AuthController],
-    providers: [AuthService],
-    exports: [JwtModule, AuthService]
+    providers: [AuthService, JwtAuthGuard],
+    exports: [JwtModule, AuthService, JwtAuthGuard]
 })
 export class AuthModule { }

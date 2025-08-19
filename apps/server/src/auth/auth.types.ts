@@ -14,12 +14,14 @@ export type AuthResponse = {
     accessToken: string
 }
 
+export type GuardUser = {
+    id: string;
+    username: string;
+    type: UserType
+};
+
 declare module "express" {
     interface Request {
-        user: {
-            id: string;
-            username: string;
-            type: UserType
-        } | null
+        user: GuardUser | null
     }
 }

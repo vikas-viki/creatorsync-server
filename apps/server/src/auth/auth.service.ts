@@ -25,11 +25,6 @@ export class AuthService {
         return accessToken;
     }
 
-    async getSessionData(userId: string, type: UserType) {
-        const chats = await this.userService.getUserChats(userId, type);
-        return chats;
-    }
-
     async authenticateUser(data: AuthInput): Promise<AuthResponse> {
         try {
             const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -57,7 +52,8 @@ export class AuthService {
                 accessToken: this.getAccessToken(userExists.id, data.type),
                 userId: userId
             };
-        } catch {
+        } catch (e) {
+            console.log(e);
             throw new Error('Invalid access token');
         }
     }

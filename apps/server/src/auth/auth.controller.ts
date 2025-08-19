@@ -36,12 +36,11 @@ export class AuthController {
 
     @Get('session')
     @UseGuards(JwtAuthGuard)
-    async getSession(@Request() req: HttpRequest) {
-        const data = await this.authService.getSessionData(req.user!.id, req.user!.type);
+    getSession(@Request() req: HttpRequest) {
         return {
-            chats: data,
             username: req.user?.username,
-            userId: req.user!.id
+            userId: req.user!.id,
+            type: req.user?.type
         }
     }
 
