@@ -1,12 +1,12 @@
-import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@creatorsync/prisma/prisma.service';
 import { Message, MessageType, UserType, VideoRequestStatus } from '@creatorsync/prisma/client';
 import { UserChatsReponse } from '../user/user.types';
 import { UserService } from '../user/user.service';
-import { NewMedia, NewMessage, NewVideoRequest, VideoRequestResponse } from './dtos/chat.dto';
-import { GuardUser } from '@creatorsync/prisma/types';
+import { NewMedia, NewMessage, NewVideoRequest, VideoRequestApprovalData, VideoRequestResponse } from './dtos/chat.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
+import { GuardUser } from '../auth/auth.types';
 
 @Injectable()
 export class ChatService {
@@ -14,10 +14,6 @@ export class ChatService {
         @Inject("MEDIA_SERVICE") private client: ClientProxy,
         @Inject(forwardRef(() => UserService)) private readonly userService: UserService
     ) { }
-
-    getVideoRequest() {
-
-    }
 
     async checkIfUserChatFound(chatId: string, user: GuardUser) {
         const chat = await this.prisma.chat.findUnique({
@@ -30,6 +26,33 @@ export class ChatService {
         if (!chat) {
             throw new ForbiddenException("Chat not found!");
         }
+    }
+
+    async approveVideoRequest(data: VideoRequestApprovalData, user: GuardUser) {
+        await this.checkIfUserChatFound(data.chatId, user);
+
+        const videoRequest = await this.prisma.videoRequest.findFirst({
+            where: {
+                id: data.videoRequestId,
+                chatId: data.chatId
+            }
+        });
+
+        if (user.type != "CREATOR") {
+            throw new BadRequestException("Only Creatros are allowed to create video requests!");
+        }
+
+        if (!videoRequest) {
+            throw new NotFoundException("Video request not found!");
+        }
+
+        if (videoRequest.status == "APPROVED") {
+            throw new BadRequestException("Video request already approved.");
+        }
+
+        const response = await firstValueFrom(this.client.send({ cmd: "upload_approved_videoRequest" }, { access_token: data.access_token, videoRequestId: data.videoRequestId }));
+        console.log({ response });
+        return "Video upload started!";
     }
 
     async getChatData(chatId: string, user: GuardUser) {
@@ -52,6 +75,7 @@ export class ChatService {
                 text: true,
                 videoRequest: {
                     select: {
+                        id: true,
                         video: true,
                         thumbnail: true,
                         title: true,
@@ -72,11 +96,12 @@ export class ChatService {
         const videoRequestsData: Record<string, VideoRequestResponse> = {};
 
         await Promise.all(videoRequests.map(async (v) => {
-            const data: { video: string, thumbnail: string, title: string, description: string, createdAt: Date, status: VideoRequestStatus, version: number } = v.videoRequest[0];
+            const data: { video: string, thumbnail: string, id: string, title: string, description: string, createdAt: Date, status: VideoRequestStatus, version: number } = v.videoRequest[0];
 
             const signedUrls: Record<string, string> = await firstValueFrom(this.client.send({ cmd: 'signed_urls_view' }, { keys: [data.thumbnail, data.video] }));
             videoRequestsData[v.id] = {
                 title: data.title,
+                id: data.id,
                 description: data.description,
                 video: signedUrls[data.video],
                 thumbnail: signedUrls[data.thumbnail],

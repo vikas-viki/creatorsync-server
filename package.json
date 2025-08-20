@@ -21,7 +21,9 @@
     "prisma:generate": "npx prisma generate --schema=libs/prisma/schema.prisma",
     "prisma:migrate": "npx prisma migrate dev --schema=libs/prisma/schema.prisma",
     "prisma:format": "npx prisma format --schema=libs/prisma/schema.prisma",
-    "postbuild": "mkdir -p dist/apps/server/libs/prisma/src && cp -r libs/prisma/src/client dist/apps/server/libs/prisma/src/client"
+    "copy:prisma:server": "mkdir -p dist/apps/server/libs/prisma/src && cp -r libs/prisma/src/client dist/apps/server/libs/prisma/src/client",
+    "copy:prisma:media-service": "mkdir -p dist/apps/media-service/libs/prisma/src && cp -r libs/prisma/src/client dist/apps/media-service/libs/prisma/src/client",
+    "postbuild": "npm run copy:prisma:server && npm run copy:prisma:media-service"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.864.0",
@@ -39,6 +41,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "cookie-parser": "^1.4.7",
+    "googleapis": "^156.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },

@@ -1,7 +1,7 @@
 import { Body, Controller, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { ServerService } from './server.service';
 import type { Request as HttpRequest } from "express";
-import { JwtAuthGuard } from '@creatorsync/prisma/guards/jwt.guard';
+import { JwtAuthGuard } from 'apps/server/src/auth/guards/jwt.guard';
 
 @Controller()
 @UseGuards(JwtAuthGuard)

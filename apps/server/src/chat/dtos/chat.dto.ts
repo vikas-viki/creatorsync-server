@@ -47,6 +47,7 @@ export class NewVideoRequestDTO {
 export type NewVideoRequest = InstanceType<typeof NewVideoRequestDTO>;
 
 export type VideoRequestResponse = {
+    id: string,
     title: string,
     description: string,
     thumbnail: string,
@@ -55,3 +56,14 @@ export type VideoRequestResponse = {
     status: VideoRequestStatus
     createdAt: Date
 }
+
+export class VideoRequestApprovalDTO {
+    @IsString()
+    access_token: string;
+    @IsString()
+    videoRequestId: string;
+    @IsString()
+    chatId: string;
+}
+
+export type VideoRequestApprovalData = InstanceType<typeof VideoRequestApprovalDTO>;

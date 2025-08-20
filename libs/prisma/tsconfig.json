@@ -3,7 +3,10 @@
         "declaration": true,
         "outDir": "../../dist/libs/prisma",
         "rootDir": "src",
-        "module": "CommonJS",
-        "target": "ES2023",
-    }
+        "module": "commonjs",
+        "target": "ES2023"
+    },
+    "include": [
+        "src/**/*.ts"
+    ]
 }

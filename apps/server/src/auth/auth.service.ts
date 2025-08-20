@@ -6,10 +6,14 @@ import { AuthResponse, GoogleSigninResponse } from './auth.types';
 import { JwtService } from "@nestjs/jwt"
 import { UserType } from '@creatorsync/prisma/client';
 
+
 @Injectable()
 export class AuthService {
 
-    constructor(private readonly userService: UserService, private readonly jwtService: JwtService) { }
+    constructor(private readonly userService: UserService, private readonly jwtService: JwtService,) { }
+
+    async handleYoutubeAuth() {
+    }
 
     async signup(data: AuthInput): Promise<AuthResponse> {
         return await this.authenticateUser(data);

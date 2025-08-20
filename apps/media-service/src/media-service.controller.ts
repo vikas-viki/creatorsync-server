@@ -15,4 +15,10 @@ export class MediaServiceController {
   async getSignedUrlForView(data: { keys: string[] }) {
     return await this.mediaServiceService.getSignedUrlForView(data.keys);
   }
+
+  @MessagePattern({ cmd: 'upload_approved_videoRequest' })
+  async uploadApprovedVideoRequest(data: { access_token: string, videoRequestId: string }) {
+    console.log("req recieved!");
+    return await this.mediaServiceService.uploadVideoRequestToYoutube(data.access_token, data.videoRequestId);
+  }
 }

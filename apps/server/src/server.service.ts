@@ -1,6 +1,6 @@
 import { PrismaService } from '@creatorsync/prisma/prisma.service';
-import { GuardUser } from '@creatorsync/prisma/types';
 import { Injectable } from '@nestjs/common';
+import { GuardUser } from "./auth/auth.types"
 
 @Injectable()
 export class ServerService {

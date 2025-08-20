@@ -10,6 +10,7 @@ import { PrismaModule } from '@creatorsync/prisma/prisma.module';
     imports: [
         forwardRef(() => UserModule),
         PrismaModule,
+        ConfigModule,
         JwtModule.registerAsync({
             imports: [ConfigModule],
             inject: [ConfigService],

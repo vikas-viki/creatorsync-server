@@ -2,11 +2,19 @@ import { Body, Controller, Get, Post, Request, Response, UseGuards } from '@nest
 import { AuthInput } from './dtos/auth.dto';
 import { AuthService } from './auth.service';
 import type { Response as HttpResponse, Request as HttpRequest } from 'express';
-import { JwtAuthGuard } from '../../../../libs/prisma/src/guards/jwt.guard';
+import { JwtAuthGuard } from './guards/jwt.guard';
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }
+
+
+    @Post('youtube')
+    @UseGuards(JwtAuthGuard)
+    getYoutubeAuthLink(@Request() res: HttpRequest, @Body() data: any) {
+        console.log(data);
+    }
+
 
     @Post('signup')
     async signup(@Body() data: AuthInput, @Response({ passthrough: true }) res: HttpResponse) {

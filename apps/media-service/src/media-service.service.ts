@@ -3,13 +3,28 @@ import { createPresignedPost } from "@aws-sdk/s3-presigned-post"
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { PrismaService } from '@creatorsync/prisma/prisma.service';
+import { google } from 'googleapis';
+import { resolve } from 'path';
+
+interface UploadVideoParams {
+    accessToken: string;
+    s3Bucket: string;
+    videoKey: string;
+    title: string;
+    description: string;
+    thumbnailKey: string;
+}
 
 @Injectable()
 export class MediaServiceService implements OnModuleInit {
 
-    constructor(private configService: ConfigService) { }
-
     private s3: S3Client;
+    private bucket: string = "";
+
+    constructor(private configService: ConfigService, private prisma: PrismaService) {
+        this.bucket = this.configService.get<string>("AWS_S3_BUCKET") ?? "";
+    }
 
     onModuleInit() {
         this.s3 = new S3Client({
@@ -21,9 +36,73 @@ export class MediaServiceService implements OnModuleInit {
         })
     }
 
+    async uploadVideoRequestToYoutube(access_token: string, videoRequestId: string) {
+        console.log("upload request recieved!");
+        const videoRequest = await this.prisma.videoRequest.findFirst({
+            where: {
+                id: videoRequestId
+            }
+        });
+        console.log(videoRequest);
+        if (!videoRequest) return;
+
+        return await this.uploadVideoToYouTube({
+            accessToken: access_token,
+            s3Bucket: this.bucket,
+            videoKey: videoRequest.video,
+            title: videoRequest.title,
+            description: videoRequest.description,
+            thumbnailKey: videoRequest.thumbnail
+        })
+    }
+
+
+    async uploadVideoToYouTube({
+        accessToken,
+        s3Bucket,
+        videoKey,
+        title,
+        description,
+        thumbnailKey,
+    }: UploadVideoParams) {
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.setCredentials({ access_token: accessToken });
+
+        const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+
+        const videoStream = (await this.s3.send(new GetObjectCommand({ Bucket: s3Bucket, Key: videoKey }))).Body;
+        const response = await youtube.videos.insert({
+            part: ['snippet', 'status'],
+            requestBody: {
+                snippet: {
+                    title,
+                    description
+                },
+                status: {
+                    privacyStatus: 'public',
+                },
+            },
+            media: {
+                body: videoStream
+            },
+        });
+        if (response.data.id) {
+            const videoId = response.data.id;
+            const thumbnailStream = (await this.s3.send(new GetObjectCommand({ Bucket: s3Bucket, Key: thumbnailKey }))).Body;
+
+            await youtube.thumbnails.set({
+                videoId,
+                media: {
+                    body: thumbnailStream,
+                },
+            });
+        }
+        return response.data;
+    }
+
     async getSignedUrlForUpload(key: string, contentType: string) {
         const data = await createPresignedPost(this.s3, {
-            Bucket: this.configService.get<string>("AWS_S3_BUCKET")!,
+            Bucket: this.bucket,
             Key: key,
             Conditions: [
                 ['content-length-range', 0, 10 * 1024 * 1024]

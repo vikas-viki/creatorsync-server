@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, Post, Query, Request, UseGuards } from '@nestjs/common';
 import type { Request as HttpRequest } from "express";
-import { JwtAuthGuard } from '../../../../libs/prisma/src/guards/jwt.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { ChatService } from './chat.service';
-import { AddNewChatDTO, NewMediaDTO, NewMessageDTO, NewVideoRequestDTO } from './dtos/chat.dto';
+import { AddNewChatDTO, NewMediaDTO, NewMessageDTO, NewVideoRequestDTO, VideoRequestApprovalDTO } from './dtos/chat.dto';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -19,6 +19,11 @@ export class ChatController {
     @Post('message/videoRequest')
     async getVideoRequest(@Request() req: HttpRequest, @Body() data: NewVideoRequestDTO) {
         return await this.chatService.addNewVideoRequest(req.user!, data);
+    }
+
+    @Post('approveVideoRequest')
+    async approveVideoRequest(@Body() data: VideoRequestApprovalDTO, @Request() req: HttpRequest) {
+        return await this.chatService.approveVideoRequest(data, req.user!);
     }
 
     @Get('')
