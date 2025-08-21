@@ -17,7 +17,8 @@ export type AuthResponse = {
 export type GuardUser = {
     id: string;
     username: string;
-    type: UserType
+    type: UserType;
+    isYoutubeConnected: boolean;
 };
 
 declare module "express" {

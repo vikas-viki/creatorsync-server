@@ -17,8 +17,18 @@ export class MediaServiceController {
   }
 
   @MessagePattern({ cmd: 'upload_approved_videoRequest' })
-  async uploadApprovedVideoRequest(data: { access_token: string, videoRequestId: string }) {
-    console.log("req recieved!");
-    return await this.mediaServiceService.uploadVideoRequestToYoutube(data.access_token, data.videoRequestId);
+  async uploadApprovedVideoRequest(data: { userId: string, videoRequestId: string }) {
+    return await this.mediaServiceService.uploadVideoRequestToYoutube(data.userId, data.videoRequestId);
+  }
+
+  @MessagePattern({ cmd: 'get_youtube_auth_link' })
+  getYoutubeAuthLink() {
+    return this.mediaServiceService.getYoutubeAuthLink();
+  }
+
+  @MessagePattern({ cmd: 'update_youtube_credentials' })
+  async updateYoutubeCredentials(data: { code: string, userId: string }) {
+    console.log("req recieved!", data);
+    return this.mediaServiceService.updateYoutbeCredentials(data.code, data.userId);
   }
 }

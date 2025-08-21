@@ -21,6 +21,19 @@ export class UserService {
         };
     }
 
+    async isYoutubeConnected(id: string): Promise<boolean> {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                id
+            }
+        });
+
+        if (user?.youtubeRefreshToken) {
+            return true;
+        }
+        return false;
+    }
+
     async findUser(email: string): Promise<FindUserResponse> {
         const user = await this.prisma.user.findUnique({
             where: {

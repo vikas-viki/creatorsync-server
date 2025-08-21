@@ -33,7 +33,8 @@ export class JwtAuthGuard implements CanActivate {
                 select: {
                     id: true,
                     username: true,
-                    type: true
+                    type: true,
+                    youtubeRefreshToken: true
                 }
             });
 
@@ -41,7 +42,12 @@ export class JwtAuthGuard implements CanActivate {
                 return false;
             }
 
-            request.user = user;
+            request.user = {
+                id: user.id,
+                isYoutubeConnected: user.youtubeRefreshToken != null,
+                username: user.username,
+                type: user.type
+            };
             return true;
         } catch {
             return false;

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Request, Response, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, InternalServerErrorException, Post, Query, Request, Response, UseGuards } from '@nestjs/common';
 import { AuthInput } from './dtos/auth.dto';
 import { AuthService } from './auth.service';
 import type { Response as HttpResponse, Request as HttpRequest } from 'express';
@@ -8,13 +8,23 @@ import { JwtAuthGuard } from './guards/jwt.guard';
 export class AuthController {
     constructor(private authService: AuthService) { }
 
-
-    @Post('youtube')
+    @Get('youtube')
     @UseGuards(JwtAuthGuard)
-    getYoutubeAuthLink(@Request() res: HttpRequest, @Body() data: any) {
-        console.log(data);
+    async getYoutubeAuthLink(@Request() req: HttpRequest) {
+        const url = await this.authService.getYoutubeAuthLink(req.user!);
+        if (url) {
+            return { url };
+        }
+        throw new InternalServerErrorException("We couldn’t log you in right now. Please try again later.")
     }
 
+    @Get('youtube/callback')
+    @UseGuards(JwtAuthGuard)
+    async handleYoutubeAuth(@Query('code') code: string, @Request() req: HttpRequest, @Response({ passthrough: true }) res: HttpResponse) {
+        const url = await this.authService.handleYoutubeAuthLink(code, req.user!);
+        console.log({ url });
+        res.redirect(url);
+    }
 
     @Post('signup')
     async signup(@Body() data: AuthInput, @Response({ passthrough: true }) res: HttpResponse) {
@@ -44,11 +54,12 @@ export class AuthController {
 
     @Get('session')
     @UseGuards(JwtAuthGuard)
-    getSession(@Request() req: HttpRequest) {
+    async getSession(@Request() req: HttpRequest) {
         return {
             username: req.user?.username,
             userId: req.user!.id,
-            type: req.user?.type
+            type: req.user?.type,
+            isYoutubeConnected: req.user?.isYoutubeConnected
         }
     }
 

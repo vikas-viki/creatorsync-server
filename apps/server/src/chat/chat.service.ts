@@ -29,6 +29,9 @@ export class ChatService {
     }
 
     async approveVideoRequest(data: VideoRequestApprovalData, user: GuardUser) {
+        if (!user.isYoutubeConnected) {
+            throw new NotFoundException("Please connect youtube to continue!");
+        }
         await this.checkIfUserChatFound(data.chatId, user);
 
         const videoRequest = await this.prisma.videoRequest.findFirst({
@@ -50,8 +53,17 @@ export class ChatService {
             throw new BadRequestException("Video request already approved.");
         }
 
-        const response = await firstValueFrom(this.client.send({ cmd: "upload_approved_videoRequest" }, { access_token: data.access_token, videoRequestId: data.videoRequestId }));
-        console.log({ response });
+        await firstValueFrom(this.client.send({ cmd: "upload_approved_videoRequest" }, { userId: user.id, videoRequestId: data.videoRequestId }));
+
+        await this.prisma.videoRequest.update({
+            where: {
+                id: data.videoRequestId
+            },
+            data: {
+                status: "APPROVED"
+            }
+        })
+
         return "Video upload started!";
     }
 

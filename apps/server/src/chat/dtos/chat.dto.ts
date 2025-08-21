@@ -59,8 +59,6 @@ export type VideoRequestResponse = {
 
 export class VideoRequestApprovalDTO {
     @IsString()
-    access_token: string;
-    @IsString()
     videoRequestId: string;
     @IsString()
     chatId: string;
