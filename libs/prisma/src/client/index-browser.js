@@ -161,6 +161,7 @@ exports.Prisma.VideoRequestScalarFieldEnum = {
   video: 'video',
   updatedAt: 'updatedAt',
   status: 'status',
+  uploadStatus: 'uploadStatus',
   createdAt: 'createdAt'
 };
 
@@ -203,6 +204,13 @@ exports.VideoRequestStatus = exports.$Enums.VideoRequestStatus = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
   CHANGES_REQUESTED: 'CHANGES_REQUESTED'
+};
+
+exports.VideoUploadStatus = exports.$Enums.VideoUploadStatus = {
+  NOT_APPROVED: 'NOT_APPROVED',
+  UPLOAD_STARTED: 'UPLOAD_STARTED',
+  VIDEO_UPLOADED: 'VIDEO_UPLOADED',
+  THUMBNAIL_UPDATED: 'THUMBNAIL_UPDATED'
 };
 
 exports.Prisma.ModelName = {

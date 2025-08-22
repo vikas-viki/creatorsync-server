@@ -71,19 +71,27 @@ enum VideoRequestStatus {
   CHANGES_REQUESTED
 }
 
+enum VideoUploadStatus {
+  NOT_APPROVED
+  UPLOAD_STARTED
+  VIDEO_UPLOADED
+  THUMBNAIL_UPDATED
+}
+
 model VideoRequest {
-  id          String             @id @default(uuid())
-  messageId   String
-  title       String
-  version     Int
-  description String
-  chatId      String
-  thumbnail   String // s3 id or filepath
-  video       String // s3 id or filepath
-  updatedAt   DateTime           @updatedAt
-  status      VideoRequestStatus
-  createdAt   DateTime           @default(now())
-  message     Message            @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  id           String             @id @default(uuid())
+  messageId    String
+  title        String
+  version      Int
+  description  String
+  chatId       String
+  thumbnail    String // s3 id or filepath
+  video        String // s3 id or filepath
+  updatedAt    DateTime           @updatedAt
+  status       VideoRequestStatus
+  uploadStatus VideoUploadStatus  @default(NOT_APPROVED)
+  createdAt    DateTime           @default(now())
+  message      Message            @relation(fields: [messageId], references: [id], onDelete: Cascade)
 }
 
 model Feedback {

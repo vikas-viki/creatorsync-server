@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, Request, Sse, UseGuards } from '@nestjs/common';
 import type { Request as HttpRequest } from "express";
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { ChatService } from './chat.service';
 import { AddNewChatDTO, NewMediaDTO, NewMessageDTO, NewVideoRequestDTO, VideoRequestApprovalDTO } from './dtos/chat.dto';
+import { Observable } from 'rxjs';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -14,6 +15,11 @@ export class ChatController {
     @Get('all')
     async getAllChats(@Request() req: HttpRequest) {
         return await this.chatService.getUserChats(req.user!.id, req.user!.type);
+    }
+
+    @Sse('progress/:id')
+    getVideoRequestStatus(@Param('id') id: string): Observable<MessageEvent> {
+        return this.chatService.getVideoUploadProgress(id);
     }
 
     @Post('message/videoRequest')

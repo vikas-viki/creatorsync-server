@@ -69,6 +69,16 @@ export const VideoRequestStatus: {
 
 export type VideoRequestStatus = (typeof VideoRequestStatus)[keyof typeof VideoRequestStatus]
 
+
+export const VideoUploadStatus: {
+  NOT_APPROVED: 'NOT_APPROVED',
+  UPLOAD_STARTED: 'UPLOAD_STARTED',
+  VIDEO_UPLOADED: 'VIDEO_UPLOADED',
+  THUMBNAIL_UPDATED: 'THUMBNAIL_UPDATED'
+};
+
+export type VideoUploadStatus = (typeof VideoUploadStatus)[keyof typeof VideoUploadStatus]
+
 }
 
 export type UserType = $Enums.UserType
@@ -82,6 +92,10 @@ export const MessageType: typeof $Enums.MessageType
 export type VideoRequestStatus = $Enums.VideoRequestStatus
 
 export const VideoRequestStatus: typeof $Enums.VideoRequestStatus
+
+export type VideoUploadStatus = $Enums.VideoUploadStatus
+
+export const VideoUploadStatus: typeof $Enums.VideoUploadStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -4533,6 +4547,7 @@ export namespace Prisma {
     video: string | null
     updatedAt: Date | null
     status: $Enums.VideoRequestStatus | null
+    uploadStatus: $Enums.VideoUploadStatus | null
     createdAt: Date | null
   }
 
@@ -4547,6 +4562,7 @@ export namespace Prisma {
     video: string | null
     updatedAt: Date | null
     status: $Enums.VideoRequestStatus | null
+    uploadStatus: $Enums.VideoUploadStatus | null
     createdAt: Date | null
   }
 
@@ -4561,6 +4577,7 @@ export namespace Prisma {
     video: number
     updatedAt: number
     status: number
+    uploadStatus: number
     createdAt: number
     _all: number
   }
@@ -4585,6 +4602,7 @@ export namespace Prisma {
     video?: true
     updatedAt?: true
     status?: true
+    uploadStatus?: true
     createdAt?: true
   }
 
@@ -4599,6 +4617,7 @@ export namespace Prisma {
     video?: true
     updatedAt?: true
     status?: true
+    uploadStatus?: true
     createdAt?: true
   }
 
@@ -4613,6 +4632,7 @@ export namespace Prisma {
     video?: true
     updatedAt?: true
     status?: true
+    uploadStatus?: true
     createdAt?: true
     _all?: true
   }
@@ -4714,6 +4734,7 @@ export namespace Prisma {
     video: string
     updatedAt: Date
     status: $Enums.VideoRequestStatus
+    uploadStatus: $Enums.VideoUploadStatus
     createdAt: Date
     _count: VideoRequestCountAggregateOutputType | null
     _avg: VideoRequestAvgAggregateOutputType | null
@@ -4747,6 +4768,7 @@ export namespace Prisma {
     video?: boolean
     updatedAt?: boolean
     status?: boolean
+    uploadStatus?: boolean
     createdAt?: boolean
     message?: boolean | MessageDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["videoRequest"]>
@@ -4762,6 +4784,7 @@ export namespace Prisma {
     video?: boolean
     updatedAt?: boolean
     status?: boolean
+    uploadStatus?: boolean
     createdAt?: boolean
     message?: boolean | MessageDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["videoRequest"]>
@@ -4778,10 +4801,11 @@ export namespace Prisma {
     video?: boolean
     updatedAt?: boolean
     status?: boolean
+    uploadStatus?: boolean
     createdAt?: boolean
   }
 
-  export type VideoRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "messageId" | "title" | "version" | "description" | "chatId" | "thumbnail" | "video" | "updatedAt" | "status" | "createdAt", ExtArgs["result"]["videoRequest"]>
+  export type VideoRequestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "messageId" | "title" | "version" | "description" | "chatId" | "thumbnail" | "video" | "updatedAt" | "status" | "uploadStatus" | "createdAt", ExtArgs["result"]["videoRequest"]>
   export type VideoRequestInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     message?: boolean | MessageDefaultArgs<ExtArgs>
   }
@@ -4805,6 +4829,7 @@ export namespace Prisma {
       video: string
       updatedAt: Date
       status: $Enums.VideoRequestStatus
+      uploadStatus: $Enums.VideoUploadStatus
       createdAt: Date
     }, ExtArgs["result"]["videoRequest"]>
     composites: {}
@@ -5210,6 +5235,7 @@ export namespace Prisma {
     readonly video: FieldRef<"VideoRequest", 'String'>
     readonly updatedAt: FieldRef<"VideoRequest", 'DateTime'>
     readonly status: FieldRef<"VideoRequest", 'VideoRequestStatus'>
+    readonly uploadStatus: FieldRef<"VideoRequest", 'VideoUploadStatus'>
     readonly createdAt: FieldRef<"VideoRequest", 'DateTime'>
   }
     
@@ -6587,6 +6613,7 @@ export namespace Prisma {
     video: 'video',
     updatedAt: 'updatedAt',
     status: 'status',
+    uploadStatus: 'uploadStatus',
     createdAt: 'createdAt'
   };
 
@@ -6715,6 +6742,20 @@ export namespace Prisma {
    * Reference to a field of type 'VideoRequestStatus[]'
    */
   export type ListEnumVideoRequestStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'VideoRequestStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'VideoUploadStatus'
+   */
+  export type EnumVideoUploadStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'VideoUploadStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'VideoUploadStatus[]'
+   */
+  export type ListEnumVideoUploadStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'VideoUploadStatus[]'>
     
 
 
@@ -6963,6 +7004,7 @@ export namespace Prisma {
     video?: StringFilter<"VideoRequest"> | string
     updatedAt?: DateTimeFilter<"VideoRequest"> | Date | string
     status?: EnumVideoRequestStatusFilter<"VideoRequest"> | $Enums.VideoRequestStatus
+    uploadStatus?: EnumVideoUploadStatusFilter<"VideoRequest"> | $Enums.VideoUploadStatus
     createdAt?: DateTimeFilter<"VideoRequest"> | Date | string
     message?: XOR<MessageRelationFilter, MessageWhereInput>
   }
@@ -6978,6 +7020,7 @@ export namespace Prisma {
     video?: SortOrder
     updatedAt?: SortOrder
     status?: SortOrder
+    uploadStatus?: SortOrder
     createdAt?: SortOrder
     message?: MessageOrderByWithRelationInput
   }
@@ -6996,6 +7039,7 @@ export namespace Prisma {
     video?: StringFilter<"VideoRequest"> | string
     updatedAt?: DateTimeFilter<"VideoRequest"> | Date | string
     status?: EnumVideoRequestStatusFilter<"VideoRequest"> | $Enums.VideoRequestStatus
+    uploadStatus?: EnumVideoUploadStatusFilter<"VideoRequest"> | $Enums.VideoUploadStatus
     createdAt?: DateTimeFilter<"VideoRequest"> | Date | string
     message?: XOR<MessageRelationFilter, MessageWhereInput>
   }, "id">
@@ -7011,6 +7055,7 @@ export namespace Prisma {
     video?: SortOrder
     updatedAt?: SortOrder
     status?: SortOrder
+    uploadStatus?: SortOrder
     createdAt?: SortOrder
     _count?: VideoRequestCountOrderByAggregateInput
     _avg?: VideoRequestAvgOrderByAggregateInput
@@ -7033,6 +7078,7 @@ export namespace Prisma {
     video?: StringWithAggregatesFilter<"VideoRequest"> | string
     updatedAt?: DateTimeWithAggregatesFilter<"VideoRequest"> | Date | string
     status?: EnumVideoRequestStatusWithAggregatesFilter<"VideoRequest"> | $Enums.VideoRequestStatus
+    uploadStatus?: EnumVideoUploadStatusWithAggregatesFilter<"VideoRequest"> | $Enums.VideoUploadStatus
     createdAt?: DateTimeWithAggregatesFilter<"VideoRequest"> | Date | string
   }
 
@@ -7329,6 +7375,7 @@ export namespace Prisma {
     video: string
     updatedAt?: Date | string
     status: $Enums.VideoRequestStatus
+    uploadStatus?: $Enums.VideoUploadStatus
     createdAt?: Date | string
     message: MessageCreateNestedOneWithoutVideoRequestInput
   }
@@ -7344,6 +7391,7 @@ export namespace Prisma {
     video: string
     updatedAt?: Date | string
     status: $Enums.VideoRequestStatus
+    uploadStatus?: $Enums.VideoUploadStatus
     createdAt?: Date | string
   }
 
@@ -7357,6 +7405,7 @@ export namespace Prisma {
     video?: StringFieldUpdateOperationsInput | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumVideoRequestStatusFieldUpdateOperationsInput | $Enums.VideoRequestStatus
+    uploadStatus?: EnumVideoUploadStatusFieldUpdateOperationsInput | $Enums.VideoUploadStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     message?: MessageUpdateOneRequiredWithoutVideoRequestNestedInput
   }
@@ -7372,6 +7421,7 @@ export namespace Prisma {
     video?: StringFieldUpdateOperationsInput | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumVideoRequestStatusFieldUpdateOperationsInput | $Enums.VideoRequestStatus
+    uploadStatus?: EnumVideoUploadStatusFieldUpdateOperationsInput | $Enums.VideoUploadStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -7386,6 +7436,7 @@ export namespace Prisma {
     video: string
     updatedAt?: Date | string
     status: $Enums.VideoRequestStatus
+    uploadStatus?: $Enums.VideoUploadStatus
     createdAt?: Date | string
   }
 
@@ -7399,6 +7450,7 @@ export namespace Prisma {
     video?: StringFieldUpdateOperationsInput | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumVideoRequestStatusFieldUpdateOperationsInput | $Enums.VideoRequestStatus
+    uploadStatus?: EnumVideoUploadStatusFieldUpdateOperationsInput | $Enums.VideoUploadStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -7413,6 +7465,7 @@ export namespace Prisma {
     video?: StringFieldUpdateOperationsInput | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumVideoRequestStatusFieldUpdateOperationsInput | $Enums.VideoRequestStatus
+    uploadStatus?: EnumVideoUploadStatusFieldUpdateOperationsInput | $Enums.VideoUploadStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -7791,6 +7844,13 @@ export namespace Prisma {
     not?: NestedEnumVideoRequestStatusFilter<$PrismaModel> | $Enums.VideoRequestStatus
   }
 
+  export type EnumVideoUploadStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.VideoUploadStatus | EnumVideoUploadStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.VideoUploadStatus[] | ListEnumVideoUploadStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.VideoUploadStatus[] | ListEnumVideoUploadStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumVideoUploadStatusFilter<$PrismaModel> | $Enums.VideoUploadStatus
+  }
+
   export type MessageRelationFilter = {
     is?: MessageWhereInput
     isNot?: MessageWhereInput
@@ -7807,6 +7867,7 @@ export namespace Prisma {
     video?: SortOrder
     updatedAt?: SortOrder
     status?: SortOrder
+    uploadStatus?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -7825,6 +7886,7 @@ export namespace Prisma {
     video?: SortOrder
     updatedAt?: SortOrder
     status?: SortOrder
+    uploadStatus?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -7839,6 +7901,7 @@ export namespace Prisma {
     video?: SortOrder
     updatedAt?: SortOrder
     status?: SortOrder
+    uploadStatus?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -7870,6 +7933,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumVideoRequestStatusFilter<$PrismaModel>
     _max?: NestedEnumVideoRequestStatusFilter<$PrismaModel>
+  }
+
+  export type EnumVideoUploadStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.VideoUploadStatus | EnumVideoUploadStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.VideoUploadStatus[] | ListEnumVideoUploadStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.VideoUploadStatus[] | ListEnumVideoUploadStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumVideoUploadStatusWithAggregatesFilter<$PrismaModel> | $Enums.VideoUploadStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumVideoUploadStatusFilter<$PrismaModel>
+    _max?: NestedEnumVideoUploadStatusFilter<$PrismaModel>
   }
 
   export type FeedbackCountOrderByAggregateInput = {
@@ -8225,6 +8298,10 @@ export namespace Prisma {
     set?: $Enums.VideoRequestStatus
   }
 
+  export type EnumVideoUploadStatusFieldUpdateOperationsInput = {
+    set?: $Enums.VideoUploadStatus
+  }
+
   export type MessageUpdateOneRequiredWithoutVideoRequestNestedInput = {
     create?: XOR<MessageCreateWithoutVideoRequestInput, MessageUncheckedCreateWithoutVideoRequestInput>
     connectOrCreate?: MessageCreateOrConnectWithoutVideoRequestInput
@@ -8408,6 +8485,13 @@ export namespace Prisma {
     not?: NestedEnumVideoRequestStatusFilter<$PrismaModel> | $Enums.VideoRequestStatus
   }
 
+  export type NestedEnumVideoUploadStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.VideoUploadStatus | EnumVideoUploadStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.VideoUploadStatus[] | ListEnumVideoUploadStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.VideoUploadStatus[] | ListEnumVideoUploadStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumVideoUploadStatusFilter<$PrismaModel> | $Enums.VideoUploadStatus
+  }
+
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -8443,6 +8527,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumVideoRequestStatusFilter<$PrismaModel>
     _max?: NestedEnumVideoRequestStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumVideoUploadStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.VideoUploadStatus | EnumVideoUploadStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.VideoUploadStatus[] | ListEnumVideoUploadStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.VideoUploadStatus[] | ListEnumVideoUploadStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumVideoUploadStatusWithAggregatesFilter<$PrismaModel> | $Enums.VideoUploadStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumVideoUploadStatusFilter<$PrismaModel>
+    _max?: NestedEnumVideoUploadStatusFilter<$PrismaModel>
   }
 
   export type ChatCreateWithoutCreatorInput = {
@@ -8851,6 +8945,7 @@ export namespace Prisma {
     video: string
     updatedAt?: Date | string
     status: $Enums.VideoRequestStatus
+    uploadStatus?: $Enums.VideoUploadStatus
     createdAt?: Date | string
   }
 
@@ -8864,6 +8959,7 @@ export namespace Prisma {
     video: string
     updatedAt?: Date | string
     status: $Enums.VideoRequestStatus
+    uploadStatus?: $Enums.VideoUploadStatus
     createdAt?: Date | string
   }
 
@@ -8971,6 +9067,7 @@ export namespace Prisma {
     video?: StringFilter<"VideoRequest"> | string
     updatedAt?: DateTimeFilter<"VideoRequest"> | Date | string
     status?: EnumVideoRequestStatusFilter<"VideoRequest"> | $Enums.VideoRequestStatus
+    uploadStatus?: EnumVideoUploadStatusFilter<"VideoRequest"> | $Enums.VideoUploadStatus
     createdAt?: DateTimeFilter<"VideoRequest"> | Date | string
   }
 
@@ -9180,6 +9277,7 @@ export namespace Prisma {
     video: string
     updatedAt?: Date | string
     status: $Enums.VideoRequestStatus
+    uploadStatus?: $Enums.VideoUploadStatus
     createdAt?: Date | string
   }
 
@@ -9193,6 +9291,7 @@ export namespace Prisma {
     video?: StringFieldUpdateOperationsInput | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumVideoRequestStatusFieldUpdateOperationsInput | $Enums.VideoRequestStatus
+    uploadStatus?: EnumVideoUploadStatusFieldUpdateOperationsInput | $Enums.VideoUploadStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -9206,6 +9305,7 @@ export namespace Prisma {
     video?: StringFieldUpdateOperationsInput | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumVideoRequestStatusFieldUpdateOperationsInput | $Enums.VideoRequestStatus
+    uploadStatus?: EnumVideoUploadStatusFieldUpdateOperationsInput | $Enums.VideoUploadStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -9219,6 +9319,7 @@ export namespace Prisma {
     video?: StringFieldUpdateOperationsInput | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     status?: EnumVideoRequestStatusFieldUpdateOperationsInput | $Enums.VideoRequestStatus
+    uploadStatus?: EnumVideoUploadStatusFieldUpdateOperationsInput | $Enums.VideoUploadStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

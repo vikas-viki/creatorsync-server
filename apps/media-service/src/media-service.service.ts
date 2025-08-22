@@ -5,7 +5,10 @@ import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PrismaService } from '@creatorsync/prisma/prisma.service';
 import { google } from 'googleapis';
-import { OAuth2Client } from 'google-auth-library';
+import { OAuth2Client, TokenInfo } from 'google-auth-library';
+import Redis from "ioredis";
+import progress from "progress-stream";
+import { Readable } from 'stream';
 
 interface UploadVideoParams {
     accessToken: string;
@@ -13,8 +16,11 @@ interface UploadVideoParams {
     s3Bucket: string;
     videoKey: string;
     title: string;
+    expiresAt: Date,
     description: string;
     thumbnailKey: string;
+    videoRequestId: string;
+    userId: string
 }
 
 @Injectable()
@@ -23,10 +29,14 @@ export class MediaServiceService implements OnModuleInit {
     private s3: S3Client;
     private bucket: string = "";
     private googleOauthClient: null | OAuth2Client = null;
+    private redis: Redis | null;
 
     constructor(private configService: ConfigService, private prisma: PrismaService) {
         this.bucket = this.configService.get<string>("AWS_S3_BUCKET") ?? "";
-
+        this.redis = new Redis(this.configService.get<string>("REDIS_URL") ?? "");
+        this.redis.on("connect", () => {
+            console.log("Redis client connected!");
+        })
         this.googleOauthClient = new google.auth.OAuth2(
             this.configService.get<string>("GOOGLE_CLIENT_ID"),
             this.configService.get<string>("GOOGLE_CLIENT_SECRET"),
@@ -96,59 +106,119 @@ export class MediaServiceService implements OnModuleInit {
         if (!videoRequest) return;
 
         return await this.uploadVideoToYouTube({
+            videoRequestId: videoRequestId,
             accessToken: user?.youtubeAccessToken!,
             refreshToken: user?.youtubeRefreshToken!,
+            expiresAt: user?.youtubeExpiresAt!,
             s3Bucket: this.bucket,
             videoKey: videoRequest.video,
             title: videoRequest.title,
             description: videoRequest.description,
-            thumbnailKey: videoRequest.thumbnail
+            thumbnailKey: videoRequest.thumbnail,
+            userId
         })
     }
 
-
     async uploadVideoToYouTube({
+        videoRequestId,
         accessToken,
         refreshToken,
+        expiresAt,
         s3Bucket,
         videoKey,
         title,
+        userId,
         description,
         thumbnailKey,
     }: UploadVideoParams) {
-        const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.setCredentials({ access_token: accessToken, refresh_token: refreshToken });
+        try {
+            this.googleOauthClient!.setCredentials({ access_token: accessToken, refresh_token: refreshToken, expiry_date: expiresAt.getTime() });
+            if (!this.googleOauthClient!.credentials || Date.now() >= this.googleOauthClient!.credentials.expiry_date!) {
 
-        const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+                const { credentials } = await this.googleOauthClient!.refreshAccessToken();
 
-        const videoStream = (await this.s3.send(new GetObjectCommand({ Bucket: s3Bucket, Key: videoKey }))).Body;
-        const response = await youtube.videos.insert({
-            part: ['snippet', 'status'],
-            requestBody: {
-                snippet: {
-                    title,
-                    description
-                },
-                status: {
-                    privacyStatus: 'public',
-                },
-            },
-            media: {
-                body: videoStream
-            },
-        });
-        if (response.data.id) {
-            const videoId = response.data.id;
-            const thumbnailStream = (await this.s3.send(new GetObjectCommand({ Bucket: s3Bucket, Key: thumbnailKey }))).Body;
+                await this.prisma.user.update({
+                    where: { id: userId },
+                    data: {
+                        youtubeAccessToken: credentials.access_token!,
+                        youtubeExpiresAt: new Date(credentials.expiry_date!),
+                    },
+                });
+            }
+            const youtube = google.youtube({ version: 'v3', auth: this.googleOauthClient! });
 
-            await youtube.thumbnails.set({
-                videoId,
-                media: {
-                    body: thumbnailStream,
-                },
+            const head = (await this.s3.send(new GetObjectCommand({ Bucket: s3Bucket, Key: videoKey })));
+            const videoStream = head.Body as Readable;
+            const videoFileSize = head.ContentLength;
+            const videoProgressStream = progress({
+                length: videoFileSize,
+                time: 1000
             });
+            let prev = 0;
+
+            videoProgressStream.on('progress', (p) => {
+                const percent = +p.percentage.toFixed(2);
+                if (percent > prev + 5) {
+                    prev = percent;
+                    this.redis!.publish(videoRequestId, JSON.stringify({ video: percent, thumbnail: 0 }));
+                }
+            })
+
+            const response = await youtube.videos.insert({
+                part: ['snippet', 'status'],
+                requestBody: {
+                    snippet: {
+                        title,
+                        description
+                    },
+                    status: {
+                        privacyStatus: 'public',
+                    },
+                },
+                media: {
+                    body: videoStream.pipe(videoProgressStream)
+                }
+            });
+
+            await this.prisma.videoRequest.update({
+                where: {
+                    id: videoRequestId
+                },
+                data: {
+                    uploadStatus: "VIDEO_UPLOADED"
+                }
+            });
+
+            if (response.data.id) {
+                prev = 0;
+                const videoId = response.data.id;
+                const thumbnailHead = (await this.s3.send(new GetObjectCommand({ Bucket: s3Bucket, Key: thumbnailKey })));
+                const thumbnailStream = thumbnailHead.Body as Readable;
+                await youtube.thumbnails.set({
+                    videoId,
+                    media: {
+                        mimeType: thumbnailHead.ContentType,
+                        body: thumbnailStream,
+                    },
+                });
+                this.redis!.publish(videoRequestId, JSON.stringify({ video: 100, thumbnail: 100 }));
+                await this.prisma.videoRequest.update({
+                    where: {
+                        id: videoRequestId
+                    },
+                    data: {
+                        uploadStatus: "THUMBNAIL_UPDATED"
+                    }
+                });
+            }
+            return response.data;
+        } catch (e) {
+            console.log("error: ", e)
+            await this.prisma.videoRequest.update({
+                where: { id: videoRequestId },
+                data: { status: "PENDING" }
+            })
         }
-        return response.data;
     }
 
     async getSignedUrlForUpload(key: string, contentType: string) {

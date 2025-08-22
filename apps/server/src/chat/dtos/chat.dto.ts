@@ -1,4 +1,4 @@
-import { VideoRequestStatus } from "@creatorsync/prisma/client";
+import { VideoRequestStatus, VideoUploadStatus } from "@creatorsync/prisma/client";
 import { IsString, Matches } from "class-validator";
 
 export class AddNewChatDTO {
@@ -54,7 +54,8 @@ export type VideoRequestResponse = {
     video: string,
     versions: number,
     status: VideoRequestStatus
-    createdAt: Date
+    createdAt: Date,
+    uploadStatus: VideoUploadStatus
 }
 
 export class VideoRequestApprovalDTO {

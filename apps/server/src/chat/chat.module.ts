@@ -5,6 +5,7 @@ import { AuthModule } from '../auth/auth.module';
 import { UserModule } from '../user/user.module';
 import { PrismaModule } from '@creatorsync/prisma/prisma.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   controllers: [ChatController],

@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { MediaServiceService } from './media-service.service';
-import { MessagePattern } from '@nestjs/microservices';
+import { EventPattern, MessagePattern } from '@nestjs/microservices';
 
 @Controller()
 export class MediaServiceController {
@@ -16,8 +16,9 @@ export class MediaServiceController {
     return await this.mediaServiceService.getSignedUrlForView(data.keys);
   }
 
-  @MessagePattern({ cmd: 'upload_approved_videoRequest' })
+  @EventPattern({ cmd: 'upload_approved_videoRequest' })
   async uploadApprovedVideoRequest(data: { userId: string, videoRequestId: string }) {
+    console.log("Upload request recieved!")
     return await this.mediaServiceService.uploadVideoRequestToYoutube(data.userId, data.videoRequestId);
   }
 
