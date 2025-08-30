@@ -68,7 +68,7 @@ model Message {
 enum VideoRequestStatus {
   PENDING
   APPROVED
-  CHANGES_REQUESTED
+  ERROR
 }
 
 enum VideoUploadStatus {
@@ -79,19 +79,20 @@ enum VideoUploadStatus {
 }
 
 model VideoRequest {
-  id           String             @id @default(uuid())
-  messageId    String
-  title        String
-  version      Int
-  description  String
-  chatId       String
-  thumbnail    String // s3 id or filepath
-  video        String // s3 id or filepath
-  updatedAt    DateTime           @updatedAt
-  status       VideoRequestStatus
-  uploadStatus VideoUploadStatus  @default(NOT_APPROVED)
-  createdAt    DateTime           @default(now())
-  message      Message            @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  id             String             @id @default(uuid())
+  messageId      String
+  title          String
+  description    String
+  chatId         String
+  thumbnail      String // s3 id or filepath
+  video          String // s3 id or filepath
+  updatedAt      DateTime           @updatedAt
+  status         VideoRequestStatus
+  uploadStatus   VideoUploadStatus  @default(NOT_APPROVED)
+  errorReason    String?
+  youtubeVideoId String?
+  createdAt      DateTime           @default(now())
+  message        Message            @relation(fields: [messageId], references: [id], onDelete: Cascade)
 }
 
 model Feedback {

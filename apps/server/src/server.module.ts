@@ -11,7 +11,7 @@ import { ChatModule } from './chat/chat.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    PrismaModule, UserModule, AuthModule, ChatModule, PrismaModule],
+    PrismaModule, UserModule, AuthModule, ChatModule],
   controllers: [ServerController, AuthController],
   providers: [ServerService, AuthService],
 })

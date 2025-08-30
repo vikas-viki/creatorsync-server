@@ -154,7 +154,6 @@ exports.Prisma.VideoRequestScalarFieldEnum = {
   id: 'id',
   messageId: 'messageId',
   title: 'title',
-  version: 'version',
   description: 'description',
   chatId: 'chatId',
   thumbnail: 'thumbnail',
@@ -162,6 +161,8 @@ exports.Prisma.VideoRequestScalarFieldEnum = {
   updatedAt: 'updatedAt',
   status: 'status',
   uploadStatus: 'uploadStatus',
+  errorReason: 'errorReason',
+  youtubeVideoId: 'youtubeVideoId',
   createdAt: 'createdAt'
 };
 
@@ -203,7 +204,7 @@ exports.MessageType = exports.$Enums.MessageType = {
 exports.VideoRequestStatus = exports.$Enums.VideoRequestStatus = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
-  CHANGES_REQUESTED: 'CHANGES_REQUESTED'
+  ERROR: 'ERROR'
 };
 
 exports.VideoUploadStatus = exports.$Enums.VideoUploadStatus = {

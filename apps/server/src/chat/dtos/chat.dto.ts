@@ -1,5 +1,5 @@
 import { VideoRequestStatus, VideoUploadStatus } from "@creatorsync/prisma/client";
-import { IsString, Matches } from "class-validator";
+import { IsString, Matches, MaxLength } from "class-validator";
 
 export class AddNewChatDTO {
     @IsString()
@@ -29,8 +29,10 @@ export type NewMedia = InstanceType<typeof NewMediaDTO>;
 
 export class NewVideoRequestDTO {
     @IsString()
+    @MaxLength(100, { message: "Video title can be max 100 characters" })
     title: string;
 
+    @MaxLength(5000, { message: "Video description can be max 5000 characters" })
     @IsString()
     description: string;
 
@@ -51,16 +53,14 @@ export type VideoRequestResponse = {
     title: string,
     description: string,
     thumbnail: string,
+    errorReason: string
     video: string,
-    versions: number,
     status: VideoRequestStatus
     createdAt: Date,
     uploadStatus: VideoUploadStatus
 }
 
 export class VideoRequestApprovalDTO {
-    @IsString()
-    videoRequestId: string;
     @IsString()
     chatId: string;
 }

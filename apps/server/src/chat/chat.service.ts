@@ -65,7 +65,7 @@ export class ChatService {
         })
     }
 
-    async approveVideoRequest(data: VideoRequestApprovalData, user: GuardUser) {
+    async approveVideoRequest(data: VideoRequestApprovalData, videoRequestId: string, user: GuardUser) {
         if (!user.isYoutubeConnected) {
             throw new NotFoundException("Please connect youtube to continue!");
         }
@@ -73,7 +73,7 @@ export class ChatService {
 
         const videoRequest = await this.prisma.videoRequest.findFirst({
             where: {
-                id: data.videoRequestId,
+                id: videoRequestId,
                 chatId: data.chatId
             }
         });
@@ -90,11 +90,11 @@ export class ChatService {
             throw new BadRequestException("Video request already approved.");
         }
 
-        this.client.emit({ cmd: "upload_approved_videoRequest" }, { userId: user.id, videoRequestId: data.videoRequestId });
+        this.client.emit({ cmd: "upload_approved_video-request" }, { userId: user.id, videoRequestId: videoRequestId });
 
         await this.prisma.videoRequest.update({
             where: {
-                id: data.videoRequestId
+                id: videoRequestId
             },
             data: {
                 status: "APPROVED",
@@ -130,13 +130,13 @@ export class ChatService {
                         thumbnail: true,
                         title: true,
                         description: true,
-                        version: true,
                         status: true,
                         createdAt: true,
-                        uploadStatus: true
+                        uploadStatus: true,
+                        errorReason: true
                     },
                     orderBy: {
-                        version: 'desc'
+                        createdAt: 'desc'
                     }
                 },
             },
@@ -156,18 +156,18 @@ export class ChatService {
                     description: string,
                     createdAt: Date,
                     status: VideoRequestStatus,
-                    version: number,
-                    uploadStatus: VideoUploadStatus
+                    uploadStatus: VideoUploadStatus,
+                    errorReason: string | null
                 } = v.videoRequest[0];
 
             const signedUrls: Record<string, string> = await firstValueFrom(this.client.send({ cmd: 'signed_urls_view' }, { keys: [data.thumbnail, data.video] }));
             videoRequestsData[v.id] = {
                 title: data.title,
                 id: data.id,
+                errorReason: data.errorReason ?? "",
                 description: data.description,
                 video: signedUrls[data.video],
                 thumbnail: signedUrls[data.thumbnail],
-                versions: data.version,
                 status: data.status,
                 createdAt: data.createdAt,
                 uploadStatus: data.uploadStatus
@@ -324,7 +324,6 @@ export class ChatService {
                 thumbnail: "",
                 video: "",
                 messageId: message.id,
-                version: 1,
                 status: "PENDING",
                 uploadStatus: "NOT_APPROVED"
             }
@@ -346,6 +345,38 @@ export class ChatService {
         const videoSignedUrl = await firstValueFrom(this.client.send({ cmd: "signed_url_upload" }, { key: videoKey, contentType: data.thumbnailType })) as unknown as string;
 
         return { thumbnailSignedUrl, videoSignedUrl };
+    }
+
+    async retryVideoRequest(videoRequestId: string, user: GuardUser) {
+        if (user.type != "CREATOR") {
+            throw new BadRequestException("Only Creatros are allowed to create video requests!");
+        }
+
+        const videoRequest = await this.prisma.videoRequest.findUnique({
+            where: {
+                id: videoRequestId
+            }
+        });
+
+        if (!videoRequest) throw new NotFoundException("Video Request not found!");
+
+        if (videoRequest.status != "ERROR") throw new BadRequestException("Video request already processed & uploaded!");
+
+        await this.checkIfUserChatFound(videoRequest?.chatId, user);
+
+        this.client.emit({ cmd: 'retry_video-request_upload' }, { videoRequestId, userId: user.id });
+
+        await this.prisma.videoRequest.update({
+            where: {
+                id: videoRequestId
+            },
+            data: {
+                status: "APPROVED",
+                uploadStatus: "UPLOAD_STARTED"
+            }
+        })
+
+        return { message: "Video Upload started!" };
     }
 
     async getChat(creatorId?: string, editorId?: string, chatId?: string) {

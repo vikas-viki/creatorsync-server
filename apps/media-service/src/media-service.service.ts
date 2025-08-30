@@ -9,6 +9,7 @@ import { OAuth2Client, TokenInfo } from 'google-auth-library';
 import Redis from "ioredis";
 import progress from "progress-stream";
 import { Readable } from 'stream';
+import { ref } from 'process';
 
 interface UploadVideoParams {
     accessToken: string;
@@ -53,6 +54,7 @@ export class MediaServiceService implements OnModuleInit {
             }
         })
     }
+
 
     getYoutubeAuthLink(): string | undefined {
         const link = this.googleOauthClient?.generateAuthUrl({
@@ -119,18 +121,7 @@ export class MediaServiceService implements OnModuleInit {
         })
     }
 
-    async uploadVideoToYouTube({
-        videoRequestId,
-        accessToken,
-        refreshToken,
-        expiresAt,
-        s3Bucket,
-        videoKey,
-        title,
-        userId,
-        description,
-        thumbnailKey,
-    }: UploadVideoParams) {
+    async authYoutube(accessToken: string, refreshToken: string, expiresAt: Date, userId: string, videoRequestId: string) {
         try {
             this.googleOauthClient!.setCredentials({ access_token: accessToken, refresh_token: refreshToken, expiry_date: expiresAt.getTime() });
             if (!this.googleOauthClient!.credentials || Date.now() >= this.googleOauthClient!.credentials.expiry_date!) {
@@ -145,8 +136,45 @@ export class MediaServiceService implements OnModuleInit {
                     },
                 });
             }
-            const youtube = google.youtube({ version: 'v3', auth: this.googleOauthClient! });
+            return google.youtube({ version: 'v3', auth: this.googleOauthClient! });
+        } catch (e) {
+            console.log("Error getting credentials: ", userId, videoRequestId, e);
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: {
+                    youtubeAccessToken: null,
+                    youtubeExpiresAt: null,
+                    youtubeRefreshToken: null
+                }
+            })
+            await this.prisma.videoRequest.update({
+                where: { id: videoRequestId },
+                data: { status: "ERROR", errorReason: "Couldn't get Youtube credentials, please authorize again." }
+            })
+            return;
+        }
+    }
 
+    async uploadVideoToYouTube({
+        videoRequestId,
+        accessToken,
+        refreshToken,
+        expiresAt,
+        s3Bucket,
+        videoKey,
+        title,
+        userId,
+        description,
+        thumbnailKey,
+    }: UploadVideoParams) {
+        let youtube = await this.authYoutube(accessToken, refreshToken, expiresAt, userId, videoRequestId);
+
+        if (!youtube) return;
+
+        let response;
+        let prev = 0;
+
+        try {
             const head = (await this.s3.send(new GetObjectCommand({ Bucket: s3Bucket, Key: videoKey })));
             const videoStream = head.Body as Readable;
             const videoFileSize = head.ContentLength;
@@ -154,7 +182,6 @@ export class MediaServiceService implements OnModuleInit {
                 length: videoFileSize,
                 time: 1000
             });
-            let prev = 0;
 
             videoProgressStream.on('progress', (p) => {
                 const percent = +p.percentage.toFixed(2);
@@ -164,11 +191,11 @@ export class MediaServiceService implements OnModuleInit {
                 }
             })
 
-            const response = await youtube.videos.insert({
+            response = await youtube.videos.insert({
                 part: ['snippet', 'status'],
                 requestBody: {
                     snippet: {
-                        title,
+                        title: title.toString().trim(),
                         description
                     },
                     status: {
@@ -188,36 +215,49 @@ export class MediaServiceService implements OnModuleInit {
                     uploadStatus: "VIDEO_UPLOADED"
                 }
             });
-
-            if (response.data.id) {
-                prev = 0;
-                const videoId = response.data.id;
-                const thumbnailHead = (await this.s3.send(new GetObjectCommand({ Bucket: s3Bucket, Key: thumbnailKey })));
-                const thumbnailStream = thumbnailHead.Body as Readable;
-                await youtube.thumbnails.set({
-                    videoId,
-                    media: {
-                        mimeType: thumbnailHead.ContentType,
-                        body: thumbnailStream,
-                    },
-                });
-                this.redis!.publish(videoRequestId, JSON.stringify({ video: 100, thumbnail: 100 }));
-                await this.prisma.videoRequest.update({
-                    where: {
-                        id: videoRequestId
-                    },
-                    data: {
-                        uploadStatus: "THUMBNAIL_UPDATED"
-                    }
-                });
-            }
-            return response.data;
         } catch (e) {
-            console.log("error: ", e)
+            console.log("Error uploading video: ", userId, videoRequestId, e);
             await this.prisma.videoRequest.update({
                 where: { id: videoRequestId },
-                data: { status: "PENDING" }
+                data: { status: "ERROR", errorReason: "Couldn't upload video, please try again later." }
+            });
+            return;
+        }
+
+        await this.uploadThumbnail(userId, videoRequestId, s3Bucket, response.data.id, youtube, thumbnailKey);
+
+        return response.data;
+    }
+
+    async uploadThumbnail(userId: string, videoRequestId: string, s3Bucket: string, videoId: string | null, youtube: any, thumbnailKey: string) {
+        try {
+            if (!videoId) throw (null);
+            const thumbnailHead = (await this.s3.send(new GetObjectCommand({ Bucket: s3Bucket, Key: thumbnailKey })));
+            const thumbnailStream = thumbnailHead.Body as Readable;
+            await youtube.thumbnails.set({
+                videoId,
+                media: {
+                    mimeType: thumbnailHead.ContentType,
+                    body: thumbnailStream,
+                },
+            });
+            this.redis!.publish(videoRequestId, JSON.stringify({ video: 100, thumbnail: 100 }));
+            await this.prisma.videoRequest.update({
+                where: {
+                    id: videoRequestId
+                },
+                data: {
+                    uploadStatus: "THUMBNAIL_UPDATED",
+                    youtubeVideoId: videoId
+                }
+            });
+        } catch (e) {
+            console.log("Error uploading thumbnail: ", userId, videoRequestId, e);
+            await this.prisma.videoRequest.update({
+                where: { id: videoRequestId },
+                data: { status: "ERROR", errorReason: "Couldn't upload thumbnail, please try again later." }
             })
+            return;
         }
     }
 
@@ -261,5 +301,42 @@ export class MediaServiceService implements OnModuleInit {
         }));
 
         return data;
+    }
+
+    async retryVideoRequestUpload(videoRequestId: string, userId: string) {
+        const videoRequest = await this.prisma.videoRequest.findUnique({
+            where: { id: videoRequestId }
+        });
+
+        const user = await this.prisma.user.findUnique({
+            where: {
+                id: userId
+            }
+        });
+        if (!user || !user.youtubeAccessToken || !user.youtubeExpiresAt || !user.youtubeRefreshToken) return;
+
+        // everything failed starting from video upload
+        if (videoRequest?.uploadStatus == "UPLOAD_STARTED") {
+            return await this.uploadVideoToYouTube({
+                videoRequestId: videoRequestId,
+                accessToken: user?.youtubeAccessToken!,
+                refreshToken: user?.youtubeRefreshToken!,
+                expiresAt: user?.youtubeExpiresAt!,
+                s3Bucket: this.bucket,
+                videoKey: videoRequest.video,
+                title: videoRequest.title,
+                description: videoRequest.description,
+                thumbnailKey: videoRequest.thumbnail,
+                userId
+            })
+        } else if (videoRequest?.uploadStatus == "VIDEO_UPLOADED") {
+            // thumbnail upload failed
+
+            if (!videoRequest.youtubeVideoId) return;
+
+            const youtube = this.authYoutube(user.youtubeAccessToken, user.youtubeRefreshToken, user.youtubeExpiresAt, userId, videoRequestId);
+            await this.uploadThumbnail(userId, videoRequestId, this.bucket, videoRequest.youtubeVideoId, youtube, videoRequest.thumbnail);
+        }
+
     }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, Request, Sse, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Request, Sse, UseGuards } from '@nestjs/common';
 import type { Request as HttpRequest } from "express";
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { ChatService } from './chat.service';
@@ -17,34 +17,34 @@ export class ChatController {
         return await this.chatService.getUserChats(req.user!.id, req.user!.type);
     }
 
-    @Sse('progress/:id')
+    @Sse('message/video-request/:id/progress')
     getVideoRequestStatus(@Param('id') id: string): Observable<MessageEvent> {
         return this.chatService.getVideoUploadProgress(id);
     }
 
-    @Post('message/videoRequest')
-    async getVideoRequest(@Request() req: HttpRequest, @Body() data: NewVideoRequestDTO) {
+    @Post('message/video-request')
+    async newVideoRequest(@Request() req: HttpRequest, @Body() data: NewVideoRequestDTO) {
         return await this.chatService.addNewVideoRequest(req.user!, data);
     }
 
-    @Post('approveVideoRequest')
-    async approveVideoRequest(@Body() data: VideoRequestApprovalDTO, @Request() req: HttpRequest) {
-        return await this.chatService.approveVideoRequest(data, req.user!);
+    @Post('message/video-request/:id/retry')
+    async retryVideoRequest(@Param('id') id: string, @Request() req: HttpRequest) {
+        return await this.chatService.retryVideoRequest(id, req.user!);
     }
 
-    @Get('')
-    async getChatData(@Query('id') id: string, @Request() req: HttpRequest) {
+    @Post('message/video-request/:id/approve')
+    async approveVideoRequest(@Param('id') id: string, @Body() data: VideoRequestApprovalDTO, @Request() req: HttpRequest) {
+        return await this.chatService.approveVideoRequest(data, id, req.user!);
+    }
+
+    @Get(':id')
+    async getChatData(@Param('id') id: string, @Request() req: HttpRequest) {
         return await this.chatService.getChatData(id, req.user!);
     }
 
     @Post('message/media')
     async mediaMessage(@Body() data: NewMediaDTO, @Request() req: HttpRequest): Promise<string> {
         return await this.chatService.mediaMessage(data, req.user!);
-    }
-
-    @Get('message/media')
-    getMediaMessage(@Query('key') key: string) {
-        console.log(key);
     }
 
     @Post('')
@@ -57,13 +57,8 @@ export class ChatController {
         return await this.chatService.addTextMessage(body, req.user!);
     }
 
-    @Post('videoRequest')
-    addNewVideoRequest() {
-
-    }
-
-    @Delete('')
-    async removeChat(@Request() req: HttpRequest, @Query('id') id: string) {
+    @Delete(':id')
+    async removeChat(@Request() req: HttpRequest, @Param('id') id: string) {
         return await this.chatService.removeChat(req.user!, id)
     }
 }
