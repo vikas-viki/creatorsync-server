@@ -20,9 +20,6 @@ export class ChatService {
         private readonly configService: ConfigService
     ) {
         this.redis = new Redis(this.configService.get<string>("REDIS_URL") ?? "")
-        this.redis.on("connect", () => {
-            console.log("Redis client connected!");
-        })
     }
 
     async checkIfUserChatFound(chatId: string, user: GuardUser) {

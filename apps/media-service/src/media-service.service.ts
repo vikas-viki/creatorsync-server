@@ -35,9 +35,7 @@ export class MediaServiceService implements OnModuleInit {
     constructor(private configService: ConfigService, private prisma: PrismaService) {
         this.bucket = this.configService.get<string>("AWS_S3_BUCKET") ?? "";
         this.redis = new Redis(this.configService.get<string>("REDIS_URL") ?? "");
-        this.redis.on("connect", () => {
-            console.log("Redis client connected!");
-        })
+
         this.googleOauthClient = new google.auth.OAuth2(
             this.configService.get<string>("GOOGLE_CLIENT_ID"),
             this.configService.get<string>("GOOGLE_CLIENT_SECRET"),

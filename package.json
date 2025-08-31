@@ -13,7 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/server/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
+    "test": "jest ",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
@@ -24,7 +24,8 @@
     "prisma:reset": "npx prisma migrate reset --schema=libs/prisma/schema.prisma",
     "copy:prisma:server": "mkdir -p dist/apps/server/libs/prisma/src && cp -r libs/prisma/src/client dist/apps/server/libs/prisma/src/client",
     "copy:prisma:media-service": "mkdir -p dist/apps/media-service/libs/prisma/src && cp -r libs/prisma/src/client dist/apps/media-service/libs/prisma/src/client",
-    "postbuild": "npm run copy:prisma:server && npm run copy:prisma:media-service"
+    "postbuild": "npm run copy:prisma:server && npm run copy:prisma:media-service",
+    "count:lines": "git ls-files '*.ts' '*.js' | xargs npx cloc --stdin-name=project"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.864.0",

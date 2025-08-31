@@ -7,27 +7,35 @@ export class ServerService {
     constructor(private readonly prisma: PrismaService) { }
 
     async addFeature(user: GuardUser, data: string) {
-        await this.prisma.feedback.create({
-            data: {
-                userId: user.id,
-                username: user.username,
-                feature: data
-            }
-        });
+        try {
+            await this.prisma.feedback.create({
+                data: {
+                    userId: user.id,
+                    username: user.username,
+                    feature: data
+                }
+            });
 
-        return "Feature request submitted!";
+            return "Feature request submitted!";
+        } catch {
+            return "Couldn't add feature, please try again later";
+        }
     }
 
 
     async addFeedback(user: GuardUser, data: string) {
-        await this.prisma.feedback.create({
-            data: {
-                userId: user.id,
-                username: user.username,
-                feedback: data
-            }
-        });
+        try {
+            await this.prisma.feedback.create({
+                data: {
+                    userId: user.id,
+                    username: user.username,
+                    feedback: data
+                }
+            });
 
-        return "Feedback submitted!";
+            return "Feedback submitted!";
+        } catch {
+            return "Couldn't add feedback, please try again later";
+        }
     }
 }
