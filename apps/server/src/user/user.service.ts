@@ -1,5 +1,5 @@
 import { PrismaService } from '@creatorsync/prisma/prisma.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateUserInput, FindUserResponse } from './user.types';
 @Injectable()
 export class UserService {
@@ -9,53 +9,77 @@ export class UserService {
 
 
     async findUserById(id: string): Promise<FindUserResponse> {
-        const user = await this.prisma.user.findUnique({
-            where: {
-                id
-            }
-        });
-        return {
-            id: user?.id ?? "",
-            exists: !!user,
-            username: user?.username ?? ""
-        };
+        try {
+            const user = await this.prisma.user.findUnique({
+                where: {
+                    id
+                }
+            });
+            return {
+                id: user?.id ?? "",
+                exists: !!user,
+                username: user?.username ?? ""
+            };
+        } catch {
+            return {
+                id: "",
+                exists: false,
+                username: ""
+            };
+        }
     }
 
     async isYoutubeConnected(id: string): Promise<boolean> {
-        const user = await this.prisma.user.findFirst({
-            where: {
-                id
-            }
-        });
+        try {
+            const user = await this.prisma.user.findUnique({
+                where: {
+                    id
+                }
+            });
 
-        if (user?.youtubeRefreshToken) {
-            return true;
+            if (user?.youtubeRefreshToken) {
+                return true;
+            }
+            return false;
+        } catch {
+            return false;
         }
-        return false;
     }
 
     async findUser(email: string): Promise<FindUserResponse> {
-        const user = await this.prisma.user.findUnique({
-            where: {
-                email
-            }
-        });
-        return {
-            id: user?.id ?? "",
-            exists: !!user,
-            username: user?.username ?? ""
-        };
+        try {
+            const user = await this.prisma.user.findUnique({
+                where: {
+                    email
+                }
+            });
+            return {
+                id: user?.id ?? "",
+                exists: !!user,
+                username: user?.username ?? ""
+            };
+        } catch {
+            return {
+                id: "",
+                exists: false,
+                username: ""
+            };
+        }
     }
 
     async createUser(data: CreateUserInput): Promise<string> {
-        const user = await this.prisma.user.create({
-            data: {
-                username: data.username,
-                subId: data.subId,
-                type: data.type,
-                email: data.email
-            }
-        });
-        return user.id;
+        try {
+            const user = await this.prisma.user.create({
+                data: {
+                    username: data.username,
+                    subId: data.subId,
+                    type: data.type,
+                    email: data.email
+                }
+            });
+            return user.id;
+        } catch {
+            throw new InternalServerErrorException("Couldn't create user, please try again later!");
+        }
     }
 }
