@@ -22,7 +22,6 @@ export class AuthController {
     @UseGuards(JwtAuthGuard)
     async handleYoutubeAuth(@Query('code') code: string, @Request() req: HttpRequest, @Response({ passthrough: true }) res: HttpResponse) {
         const url = await this.authService.handleYoutubeAuthLink(code, req.user!);
-        console.log({ url });
         res.redirect(url);
     }
 
@@ -68,5 +67,7 @@ export class AuthController {
         res.cookie('jwt', '', {
             maxAge: 1
         })
+
+        return "Logout successful!";
     }
 }

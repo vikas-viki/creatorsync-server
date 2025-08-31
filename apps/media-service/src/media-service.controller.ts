@@ -34,7 +34,6 @@ export class MediaServiceController {
 
   @MessagePattern({ cmd: 'update_youtube_credentials' })
   async updateYoutubeCredentials(data: { code: string, userId: string }) {
-    console.log("req recieved!", data);
     return this.mediaServiceService.updateYoutbeCredentials(data.code, data.userId);
   }
 }

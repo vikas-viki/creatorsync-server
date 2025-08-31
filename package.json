@@ -21,6 +21,7 @@
     "prisma:generate": "npx prisma generate --schema=libs/prisma/schema.prisma",
     "prisma:migrate": "npx prisma migrate dev --schema=libs/prisma/schema.prisma",
     "prisma:format": "npx prisma format --schema=libs/prisma/schema.prisma",
+    "prisma:reset": "npx prisma migrate reset --schema=libs/prisma/schema.prisma",
     "copy:prisma:server": "mkdir -p dist/apps/server/libs/prisma/src && cp -r libs/prisma/src/client dist/apps/server/libs/prisma/src/client",
     "copy:prisma:media-service": "mkdir -p dist/apps/media-service/libs/prisma/src && cp -r libs/prisma/src/client dist/apps/media-service/libs/prisma/src/client",
     "postbuild": "npm run copy:prisma:server && npm run copy:prisma:media-service"
@@ -92,6 +93,9 @@
     "testEnvironment": "node",
     "roots": [
       "<rootDir>/apps/"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^@creatorsync/prisma/(.*)$": "<rootDir>/libs/prisma/src/$1"
+    }
   }
 }

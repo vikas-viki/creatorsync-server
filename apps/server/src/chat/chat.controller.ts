@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Request, Sse, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Query, Request, Sse, UseGuards } from '@nestjs/common';
 import type { Request as HttpRequest } from "express";
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { ChatService } from './chat.service';
@@ -38,8 +38,8 @@ export class ChatController {
     }
 
     @Get(':id')
-    async getChatData(@Param('id') id: string, @Request() req: HttpRequest) {
-        return await this.chatService.getChatData(id, req.user!);
+    async getChatData(@Param('id') id: string, @Request() req: HttpRequest, @Query('skip', ParseIntPipe) skip: number) {
+        return await this.chatService.getChatData(id, req.user!, skip);
     }
 
     @Post('message/media')

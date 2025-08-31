@@ -105,9 +105,13 @@ export class ChatService {
         return "Video upload started!";
     }
 
-    async getChatData(chatId: string, user: GuardUser) {
+    async getChatData(chatId: string, user: GuardUser, skip: number) {
         await this.checkIfUserChatFound(chatId, user);
-
+        const totalMessages: number = await this.prisma.message.count({
+            where: {
+                chatId
+            }
+        })
         const messages = await this.prisma.message.findMany({
             where: {
                 chatId
@@ -140,7 +144,8 @@ export class ChatService {
                     }
                 },
             },
-            take: 30
+            take: 30,
+            skip
         });
 
         const videoRequests = messages.filter(m => m.type == "VIDEO_REQUEST");
@@ -191,7 +196,7 @@ export class ChatService {
             ...(m.type == "VIDEO_REQUEST" ? { videoRequest: videoRequestsData[m.id] } : {})
         }))
 
-        return data;
+        return { messages: data, totalMessages };
     }
 
     getContent(type: MessageType, message: Message): string {

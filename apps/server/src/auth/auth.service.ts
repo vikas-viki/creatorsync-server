@@ -75,7 +75,6 @@ export class AuthService {
                 userId: userId
             };
         } catch (e) {
-            console.log(e);
             throw new Error('Invalid access token');
         }
     }
