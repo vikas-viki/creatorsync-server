@@ -66,3 +66,15 @@ export class VideoRequestApprovalDTO {
 }
 
 export type VideoRequestApprovalData = InstanceType<typeof VideoRequestApprovalDTO>;
+
+export type ChatData = {
+    messages: {
+        id: string,
+        senderId: string,
+        createdAt: Date,
+        type: string,
+        content?: string,
+        videoRequest?: VideoRequestResponse
+    }[],
+    totalMessages: number
+}

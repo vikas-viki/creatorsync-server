@@ -3,7 +3,7 @@ import { PrismaService } from '@creatorsync/prisma/prisma.service';
 import { Message, MessageType, UserType, VideoRequestStatus, VideoUploadStatus } from '@creatorsync/prisma/client';
 import { UserChatsReponse } from '../user/user.types';
 import { UserService } from '../user/user.service';
-import { NewMedia, NewMessage, NewVideoRequest, VideoRequestApprovalData, VideoRequestResponse } from './dtos/chat.dto';
+import { ChatData, NewMedia, NewMessage, NewVideoRequest, VideoRequestApprovalData, VideoRequestResponse } from './dtos/chat.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom, Observable } from 'rxjs';
 import { GuardUser } from '../auth/auth.types';
@@ -102,7 +102,7 @@ export class ChatService {
         return "Video upload started!";
     }
 
-    async getChatData(chatId: string, user: GuardUser, skip: number) {
+    async getChatData(chatId: string, user: GuardUser, skip: number): Promise<ChatData> {
         await this.checkIfUserChatFound(chatId, user);
         const totalMessages: number = await this.prisma.message.count({
             where: {
@@ -222,6 +222,8 @@ export class ChatService {
                 id: chat.id
             }
         });
+
+        return "Chat removed successfully!";
     }
 
     async addNewChat(editorId: string, creator: GuardUser) {
