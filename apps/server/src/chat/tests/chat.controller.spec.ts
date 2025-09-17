@@ -236,5 +236,5 @@ describe('chat controller', () => {
         expect(result).toEqual(data);
         expect(mockChatService.removeChat).toHaveBeenCalledTimes(1);
         expect(mockChatService.removeChat).toHaveBeenCalledWith(req.user, '123');
-    })
+    });
 })

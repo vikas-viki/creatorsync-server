@@ -31,7 +31,7 @@ export class ChatService {
         });
 
         if (!chat) {
-            throw new ForbiddenException("Chat not found!");
+            throw new NotFoundException("Chat not found!");
         }
     }
 
@@ -64,7 +64,7 @@ export class ChatService {
 
     async approveVideoRequest(data: VideoRequestApprovalData, videoRequestId: string, user: GuardUser) {
         if (!user.isYoutubeConnected) {
-            throw new NotFoundException("Please connect youtube to continue!");
+            throw new ForbiddenException("Please connect youtube to continue!");
         }
         await this.checkIfUserChatFound(data.chatId, user);
 
@@ -109,7 +109,7 @@ export class ChatService {
                 chatId
             }
         })
-        const messages = await this.prisma.message.findMany({
+        const messages = totalMessages > 0 ? await this.prisma.message.findMany({
             where: {
                 chatId
             },
@@ -143,7 +143,7 @@ export class ChatService {
             },
             take: 30,
             skip
-        });
+        }) : [];
 
         const videoRequests = messages.filter(m => m.type == "VIDEO_REQUEST");
         const videoRequestsData: Record<string, VideoRequestResponse> = {};
@@ -199,8 +199,10 @@ export class ChatService {
     getContent(type: MessageType, message: Message): string {
         if (type == "IMAGE") {
             return message.image[0] ?? "";
-        } else {
+        } else if (type == "VIDEO") {
             return message.video[0] ?? "";
+        } else {
+            return "";
         }
     }
 
@@ -234,7 +236,7 @@ export class ChatService {
         const user = await this.userService.findUserById(editorId);
 
         if (!user.exists) {
-            throw new BadRequestException("Editor doesn't exists!");
+            throw new NotFoundException("Editor doesn't exists!");
         }
 
         const chat = await this.getChat(creator.id, editorId);
@@ -253,25 +255,27 @@ export class ChatService {
         return { chatId: newChat.id, editorName: user.username, message: "Chat added successfully" };
     }
 
-    async deleteChat(creator: GuardUser, chatId: string) {
-        if (creator.type != UserType.CREATOR) {
-            throw new BadRequestException("Only creators are alllowed to delete chats!");
+    /*
+        async deleteChat(creator: GuardUser, chatId: string) {
+            if (creator.type != UserType.CREATOR) {
+                throw new BadRequestException("Only creators are alllowed to delete chats!");
+            }
+    
+            const chat = await this.getChat(creator.id, undefined, chatId);
+    
+            if (chat) {
+                await this.prisma.chat.delete({
+                    where: {
+                        id: chat.id
+                    }
+                });
+            } else {
+                throw new NotFoundException("Chat doesnot exists!");
+            }
+    
+            return { message: "Chat Deleted successfully" };
         }
-
-        const chat = await this.getChat(creator.id, undefined, chatId);
-
-        if (chat) {
-            await this.prisma.chat.delete({
-                where: {
-                    id: chat.id
-                }
-            });
-        } else {
-            throw new BadRequestException("Chat doesnot exists!");
-        }
-
-        return { message: "Chat Deleted successfully" };
-    }
+    */
 
     async mediaMessage(data: NewMedia, user: GuardUser): Promise<string> {
         await this.checkIfUserChatFound(data.chatId, user);

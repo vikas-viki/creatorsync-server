@@ -89,7 +89,9 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!**/main.ts",
+      "!**/library.js"
     ],
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",
@@ -98,6 +100,9 @@
     ],
     "moduleNameMapper": {
       "^@creatorsync/prisma/(.*)$": "<rootDir>/libs/prisma/src/$1"
-    }
+    },
+    "coveragePathIgnorePatterns": [
+      "<rootDir>/apps/server/src/main.ts"
+    ]
   }
 }
