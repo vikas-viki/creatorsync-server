@@ -23,7 +23,6 @@ export class MediaServiceController {
 
   @EventPattern({ cmd: 'upload_approved_video-request' })
   async uploadApprovedVideoRequest(data: { userId: string, videoRequestId: string }) {
-    console.log("Upload request recieved!")
     return await this.mediaServiceService.uploadVideoRequestToYoutube(data.userId, data.videoRequestId);
   }
 
