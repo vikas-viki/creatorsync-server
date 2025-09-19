@@ -1,5 +1,5 @@
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { createPresignedPost } from "@aws-sdk/s3-presigned-post"
+import aws_sdk_signer from "@aws-sdk/s3-presigned-post"
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -53,7 +53,7 @@ export class MediaServiceService implements OnModuleInit {
         })
     }
 
-
+    // DONE
     getYoutubeAuthLink(): string | undefined {
         const link = this.googleOauthClient?.generateAuthUrl({
             access_type: 'offline',
@@ -67,6 +67,7 @@ export class MediaServiceService implements OnModuleInit {
         return link;
     }
 
+    // DONE
     async updateYoutbeCredentials(code: string, userId: string) {
         const token = await this.googleOauthClient?.getToken(code);
         const refresh_token = token?.tokens.refresh_token;
@@ -92,6 +93,7 @@ export class MediaServiceService implements OnModuleInit {
         return "OKAY";
     }
 
+    // DONE
     async uploadVideoRequestToYoutube(userId: string, videoRequestId: string) {
         const user = await this.prisma.user.findUnique({
             where: {
@@ -119,6 +121,7 @@ export class MediaServiceService implements OnModuleInit {
         })
     }
 
+    // DONE
     async authYoutube(accessToken: string, refreshToken: string, expiresAt: Date, userId: string, videoRequestId: string) {
         try {
             this.googleOauthClient!.setCredentials({ access_token: accessToken, refresh_token: refreshToken, expiry_date: expiresAt.getTime() });
@@ -153,6 +156,7 @@ export class MediaServiceService implements OnModuleInit {
         }
     }
 
+    // DONE
     async uploadVideoToYouTube({
         videoRequestId,
         accessToken,
@@ -182,6 +186,7 @@ export class MediaServiceService implements OnModuleInit {
             });
 
             videoProgressStream.on('progress', (p) => {
+                console.log("progress___called", p)
                 const percent = +p.percentage.toFixed(2);
                 if (percent > prev + 5) {
                     prev = percent;
@@ -203,8 +208,8 @@ export class MediaServiceService implements OnModuleInit {
                 media: {
                     body: videoStream.pipe(videoProgressStream)
                 }
-            });
 
+            });
             await this.prisma.videoRequest.update({
                 where: {
                     id: videoRequestId
@@ -227,6 +232,7 @@ export class MediaServiceService implements OnModuleInit {
         return response.data;
     }
 
+    // DONE
     async uploadThumbnail(userId: string, videoRequestId: string, s3Bucket: string, videoId: string | null, youtube: any, thumbnailKey: string) {
         try {
             if (!videoId) throw (null);
@@ -259,8 +265,9 @@ export class MediaServiceService implements OnModuleInit {
         }
     }
 
+    // DONE
     async getSignedUrlForUpload(key: string, contentType: string) {
-        const data = await createPresignedPost(this.s3, {
+        const data = await aws_sdk_signer.createPresignedPost(this.s3, {
             Bucket: this.bucket,
             Key: key,
             Conditions: [
@@ -275,6 +282,7 @@ export class MediaServiceService implements OnModuleInit {
         return data;
     }
 
+    // DONE
     async getSignedUrlForView(keys: string[]) {
         const data: Record<string, string> = {};
         const bucket = this.configService.get<string>("AWS_S3_BUCKET")!
@@ -293,7 +301,7 @@ export class MediaServiceService implements OnModuleInit {
                 const signedUrl = await getSignedUrl(this.s3, command, { expiresIn: 60 * 2 });
                 data[k] = signedUrl;
             } catch (err) {
-                console.error(`Failed to generate signed URL for key "${k}":`, err);
+                // console.error(`Failed to generate signed URL for key "${k}":`, err);
                 data[k] = "";
             }
         }));
@@ -301,6 +309,7 @@ export class MediaServiceService implements OnModuleInit {
         return data;
     }
 
+    // DONE
     async retryVideoRequestUpload(videoRequestId: string, userId: string) {
         const videoRequest = await this.prisma.videoRequest.findUnique({
             where: { id: videoRequestId }
