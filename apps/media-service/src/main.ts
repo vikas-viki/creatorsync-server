@@ -7,11 +7,11 @@ async function bootstrap() {
     {
       transport: Transport.TCP,
       options: {
-        port: 3001
+        port: 8001
       }
     }
   );
-  console.log("Microservice running on port 3001");
+  console.log("Microservice running on port 8001");
   await app.listen();
 }
 bootstrap();
