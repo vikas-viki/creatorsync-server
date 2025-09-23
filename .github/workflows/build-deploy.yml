@@ -1,0 +1,68 @@
+name: Build and deploy creator-sync server
+
+on:
+    push:
+        branches: [main]
+
+jobs: 
+    builder:
+        runs-on: ubuntu-latest
+
+        env:
+            ECR_REGISTRY: ${{secrets.ECR_REGISTRY}}
+            IMAGE_TAG: latest
+        
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+
+            - name: Setup AWS credentials
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
+                    aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
+                    aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+                    aws-region: ${{secrets.AWS_REGION}}
+            
+            - name: Login to ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+                
+            - name: Build and push image
+              env: 
+                ECR_REPOSITORY_SERVER: ${{secrets.ECR_REPOSITORY_SERVER}}
+              run: |
+                IMAGE_NAME=$ECR_REGISTRY/$ECR_REPOSITORY_SERVER:$IMAGE_TAG
+                docker build ./ -t $IMAGE_NAME
+                docker push $IMAGE_NAME
+    deployer:
+        runs-on: ubuntu-latest
+        needs: builder
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+
+            - name: Start SSH agent
+              uses: webfactory/ssh-agent@v0.9.0
+              with: 
+                ssh-private-key: ${{secrets.EC2_SSH_key}}
+
+            - name: Configure ENV variables on server
+              run: |
+                ssh -o StrictHostKeyChecking=no ubuntu@${{secrets.EC2_HOST}} "rm -f ~/creator-sync/.env"
+                scp -o StrictHostKeyChecking=no env.gpg ubuntu@${{secrets.EC2_HOST}}:~/creator-sync/
+
+            - name: Deploy using docker compose
+              uses: appleboy/ssh-action@v1.0.3
+              with: 
+                  host: ${{secrets.EC2_HOST}}
+                  username: ubuntu
+                  key: ${{secrets.EC2_SSH_KEY}}
+                  script: |
+                    IMAGE_NAME=${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY_SERVER }}:latest
+                    aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+                    docker pull $IMAGE_NAME
+                    docker stop ui || true
+                    docker rm ui || true
+                    cd ~/creator-sync && gpg --batch --passphrase ${{secrets.GPG_SECRET}} --output '.env' --decrypt 'env.gpg' && docker-compose up
+
+        

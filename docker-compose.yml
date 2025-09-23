@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   server:
-    image: creator-sync-server:latest
+    image: 979188187252.dkr.ecr.ap-south-1.amazonaws.com/creatorsync-server:latest
     build: ./
     env_file: ./.env
     environment:
@@ -11,7 +11,7 @@ services:
       - redis  
 
   media-service:
-    image: creator-sync-server:latest
+    image: 979188187252.dkr.ecr.ap-south-1.amazonaws.com/creatorsync-server:latest
     build: ./
     env_file: ./.env
     environment: 

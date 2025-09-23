@@ -47,6 +47,9 @@ lerna-debug.log*
 .tmp
 
 # Runtime data
+*.env.production
+*.pem
+.gpg_passphrase
 pids
 *.pid
 *.seed
