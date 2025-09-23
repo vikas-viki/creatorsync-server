@@ -27,7 +27,6 @@ RUN pnpm i --prod --frozen-lockfile
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
-COPY --from=builder /app/docker-compose.yml ./docker-compose.yml
 
 RUN chmod +x ./entrypoint.sh
 

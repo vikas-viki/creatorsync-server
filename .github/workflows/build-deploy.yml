@@ -49,6 +49,8 @@ jobs:
             - name: Configure ENV variables on server
               run: |
                 ssh -o StrictHostKeyChecking=no ubuntu@${{secrets.EC2_HOST}} "rm -f ~/creator-sync/.env"
+                ssh -o StrictHostKeyChecking=no ubuntu@${{secrets.EC2_HOST}} "rm -f ~/creator-sync/docker-compose.yml"
+                scp -o StrictHostKeyChecking=no docker-compose.yml ubuntu@${{secrets.EC2_HOST}}:~/creator-sync/
                 scp -o StrictHostKeyChecking=no env.gpg ubuntu@${{secrets.EC2_HOST}}:~/creator-sync/
 
             - name: Deploy using docker compose
@@ -61,8 +63,10 @@ jobs:
                     IMAGE_NAME=${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY_SERVER }}:latest
                     aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
                     docker pull $IMAGE_NAME
-                    docker stop ui || true
-                    docker rm ui || true
-                    cd ~/creator-sync && gpg --batch --passphrase ${{secrets.GPG_SECRET}} --output '.env' --decrypt 'env.gpg' && docker-compose up
-
-        
+                    docker stop creator-sync_media-service_1 || true
+                    docker stop creator-sync_server_1 || true
+                    docker stop creator-sync_redis_1 || true
+                    docker rm creator-sync_media-service_1 || true
+                    docker rm creator-sync_server_1 || true
+                    docker rm creator-sync_redis_1 || true
+                    cd ~/creator-sync && gpg --batch --passphrase ${{secrets.GPG_SECRET}} --output '.env' --decrypt 'env.gpg' && docker-compose up -d
