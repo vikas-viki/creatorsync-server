@@ -12,7 +12,7 @@ async function bootstrap() {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   app.use(cookieParser())
   app.enableCors({
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "https://creator-sync.0xbuilder.in"],
     credentials: true
   })
   app.setGlobalPrefix('api');

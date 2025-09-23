@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { ServerService } from './server.service';
 import type { Request as HttpRequest } from "express";
 import { JwtAuthGuard } from './auth/guards/jwt.guard';
@@ -14,5 +14,10 @@ export class ServerController {
       return await this.serverService.addFeature(req.user!, data.feedback);
     }
     return await this.serverService.addFeedback(req.user!, data.feedback);
+  }
+
+  @Get('health')
+  status() {
+    return "Server is healthy";
   }
 }
