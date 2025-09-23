@@ -6,7 +6,7 @@ COPY package.json ./package.json
 COPY pnpm-lock.yaml ./pnpm-lock.yaml
 
 RUN npm i -g pnpm
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install 
 RUN pnpm approve-builds @prisma/client
 
 COPY . .
@@ -19,10 +19,14 @@ FROM node:22-slim AS runner
 
 WORKDIR /app
 
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
+
+RUN npm i -g pnpm
+RUN pnpm i --prod --frozen-lockfile
+
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/node_modules ./node_modules
 
 RUN chmod +x ./entrypoint.sh
 
