@@ -9,17 +9,28 @@ import { firstValueFrom, Observable } from 'rxjs';
 import { GuardUser } from '../auth/auth.types';
 import Redis from 'ioredis';
 import { ConfigService } from '@nestjs/config';
+import { ReceiveMessageCommand, SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 
 @Injectable()
 export class ChatService {
     private redis: Redis | null;
+    private sqs: SQSClient | null;
+    private SQS_url: string | null;
 
     constructor(private readonly prisma: PrismaService,
         @Inject("MEDIA_SERVICE") private client: ClientProxy,
         @Inject(forwardRef(() => UserService)) private readonly userService: UserService,
         private readonly configService: ConfigService
     ) {
-        this.redis = new Redis(this.configService.get<string>("REDIS_URL") ?? "")
+        this.sqs = new SQSClient({ 
+            region: "ap-south-1",
+            credentials: {
+                accessKeyId: this.configService.get<string>("SQS_ACCESS_KEY") ?? "",
+                secretAccessKey: this.configService.get<string>("SQS_SECRET_ACCESS_KEY") ?? ""
+            }
+        });
+        this.SQS_url = this.configService.get<string>("SQS_URL") ?? null;
+        this.redis = new Redis(this.configService.get<string>("REDIS_URL") ?? "");
     }
 
     async checkIfUserChatFound(chatId: string, user: GuardUser) {
@@ -87,19 +98,24 @@ export class ChatService {
             throw new BadRequestException("Video request already approved.");
         }
 
-        this.client.emit({ cmd: "upload_approved_video-request" }, { userId: user.id, videoRequestId: videoRequestId });
+        const pushResult = await this.pushToSQS({ cmd: "upload_approved_video-request", data: { userId: user.id, videoRequestId: videoRequestId } });
+        // this.client.emit({ cmd: "upload_approved_video-request" }, { userId: user.id, videoRequestId: videoRequestId });
 
-        await this.prisma.videoRequest.update({
-            where: {
-                id: videoRequestId
-            },
-            data: {
-                status: "APPROVED",
-                uploadStatus: "UPLOAD_STARTED"
-            }
-        })
+        if (pushResult) {
+            await this.prisma.videoRequest.update({
+                where: {
+                    id: videoRequestId
+                },
+                data: {
+                    status: "APPROVED",
+                    uploadStatus: 'QUEUED'
+                }
+            });
 
-        return "Video upload started!";
+            return "Video queued for upload!";
+        } else {
+            return "Couldn't approve video request, please try again later."
+        }
     }
 
     async getChatData(chatId: string, user: GuardUser, skip: number): Promise<ChatData> {
@@ -255,28 +271,6 @@ export class ChatService {
         return { chatId: newChat.id, editorName: user.username, message: "Chat added successfully" };
     }
 
-    /*
-        async deleteChat(creator: GuardUser, chatId: string) {
-            if (creator.type != UserType.CREATOR) {
-                throw new BadRequestException("Only creators are alllowed to delete chats!");
-            }
-    
-            const chat = await this.getChat(creator.id, undefined, chatId);
-    
-            if (chat) {
-                await this.prisma.chat.delete({
-                    where: {
-                        id: chat.id
-                    }
-                });
-            } else {
-                throw new NotFoundException("Chat doesnot exists!");
-            }
-    
-            return { message: "Chat Deleted successfully" };
-        }
-    */
-
     async mediaMessage(data: NewMedia, user: GuardUser): Promise<string> {
         await this.checkIfUserChatFound(data.chatId, user);
 
@@ -355,6 +349,23 @@ export class ChatService {
         return { thumbnailSignedUrl, videoSignedUrl };
     }
 
+    async pushToSQS(data: any): Promise<boolean> {
+        try {
+            if (!this.sqs || !this.SQS_url) return false;
+
+            const params = {
+                QueueUrl: this.SQS_url,
+                MessageBody: JSON.stringify(data)
+            }
+
+            await this.sqs.send(new SendMessageCommand(params));
+            return true;
+        } catch (e) {
+            console.log(e);
+        }
+        return false;
+    }
+
     async retryVideoRequest(videoRequestId: string, user: GuardUser) {
         if (user.type != "CREATOR") {
             throw new BadRequestException("Only Creatros are allowed to create video requests!");
@@ -372,19 +383,24 @@ export class ChatService {
 
         await this.checkIfUserChatFound(videoRequest?.chatId, user);
 
-        this.client.emit({ cmd: 'retry_video-request_upload' }, { videoRequestId, userId: user.id });
+        // this.client.emit({ cmd: 'retry_video-request_upload' }, { videoRequestId, userId: user.id });
+        const pushResult = await this.pushToSQS({ cmd: 'retry_video-request_upload', data: { videoRequestId, userId: user.id } })
 
-        await this.prisma.videoRequest.update({
-            where: {
-                id: videoRequestId
-            },
-            data: {
-                status: "APPROVED",
-                uploadStatus: "UPLOAD_STARTED"
-            }
-        })
+        if (pushResult) {
+            await this.prisma.videoRequest.update({
+                where: {
+                    id: videoRequestId
+                },
+                data: {
+                    status: "APPROVED",
+                    uploadStatus: "QUEUED"
+                }
+            })
 
-        return { message: "Video Upload started!" };
+            return { message: "Video Upload Queued!" };
+        } else {
+            return { message: "Couldn't start upload, please try again later." };
+        }
     }
 
     async getChat(creatorId?: string, editorId?: string, chatId?: string) {

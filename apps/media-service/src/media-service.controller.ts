@@ -16,15 +16,15 @@ export class MediaServiceController {
     return await this.mediaServiceService.getSignedUrlForView(data.keys);
   }
 
-  @EventPattern({ cmd: 'retry_video-request_upload' })
-  async retryVideoRequestUpload(data: { videoRequestId: string, userId: string }) {
-    return await this.mediaServiceService.retryVideoRequestUpload(data.videoRequestId, data.userId);
-  }
+  // @EventPattern({ cmd: 'retry_video-request_upload' })
+  // async retryVideoRequestUpload(data: { videoRequestId: string, userId: string }) {
+  //   return await this.mediaServiceService.retryVideoRequestUpload(data.videoRequestId, data.userId);
+  // }
 
-  @EventPattern({ cmd: 'upload_approved_video-request' })
-  async uploadApprovedVideoRequest(data: { userId: string, videoRequestId: string }) {
-    return await this.mediaServiceService.uploadVideoRequestToYoutube(data.userId, data.videoRequestId);
-  }
+  // @EventPattern({ cmd: 'upload_approved_video-request' })
+  // async uploadApprovedVideoRequest(data: { userId: string, videoRequestId: string }) {
+  //   return await this.mediaServiceService.uploadVideoRequestToYoutube(data.userId, data.videoRequestId);
+  // }
 
   @MessagePattern({ cmd: 'get_youtube_auth_link' })
   getYoutubeAuthLink() {

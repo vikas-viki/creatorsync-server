@@ -71,6 +71,7 @@ export type VideoRequestStatus = (typeof VideoRequestStatus)[keyof typeof VideoR
 
 
 export const VideoUploadStatus: {
+  QUEUED: 'QUEUED',
   NOT_APPROVED: 'NOT_APPROVED',
   UPLOAD_STARTED: 'UPLOAD_STARTED',
   VIDEO_UPLOADED: 'VIDEO_UPLOADED',

@@ -5,7 +5,6 @@ import { AuthModule } from '../auth/auth.module';
 import { UserModule } from '../user/user.module';
 import { PrismaModule } from '@creatorsync/prisma/prisma.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { ConfigModule } from '@nestjs/config';
 
 @Module({
   controllers: [ChatController],
@@ -15,7 +14,7 @@ import { ConfigModule } from '@nestjs/config';
       {
         name: "MEDIA_SERVICE",
         transport: Transport.TCP,
-        options: { host: 'localhost', port: 3001 }
+        options: { host: 'localhost', port: 8001 }
       }
     ]),
     forwardRef(() => AuthModule), forwardRef(() => UserModule), PrismaModule],

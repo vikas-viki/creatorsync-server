@@ -9,7 +9,6 @@ import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { ConfigService } from '@nestjs/config';
 
-
 @Injectable()
 export class AuthService {
 

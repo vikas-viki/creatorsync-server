@@ -20,12 +20,15 @@
     "prisma:migrate": "npx prisma migrate dev --schema=libs/prisma/schema.prisma",
     "prisma:format": "npx prisma format --schema=libs/prisma/schema.prisma",
     "prisma:reset": "npx prisma migrate reset --schema=libs/prisma/schema.prisma",
-    "copy:prisma:libs": "mkdir -p dist/libs/prisma/src && cp -r libs/prisma/src/client dist/libs/prisma/src",
-    "postbuild": "npm run copy:prisma:libs",
+    "copy:prisma:server": "mkdir -p dist/apps/server/libs/prisma/src && cp -r libs/prisma/src/client dist/apps/server/libs/prisma/src",
+    "copy:prisma:media-service": "mkdir -p dist/apps/media-service/libs/prisma/src && cp -r libs/prisma/src/client dist/apps/media-service/libs/prisma/src",
+    "copy:prisma:libs:main": "mkdir -p dist/libs/prisma/src && cp -r libs/prisma/src/client dist/libs/prisma/src/client",
+    "postbuild": "npm run copy:prisma:libs:main",
     "count:lines": "git ls-files '*.ts' '*.js' | xargs npx cloc --stdin-name=project"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.864.0",
+    "@aws-sdk/client-sqs": "^3.896.0",
     "@aws-sdk/s3-presigned-post": "^3.864.0",
     "@aws-sdk/s3-request-presigner": "^3.864.0",
     "@nestjs/cli": "^11.0.0",

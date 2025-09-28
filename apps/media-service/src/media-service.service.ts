@@ -1,15 +1,15 @@
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import aws_sdk_signer from "@aws-sdk/s3-presigned-post"
+import * as aws_sdk_signer from "@aws-sdk/s3-presigned-post"
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PrismaService } from '@creatorsync/prisma/prisma.service';
 import { google } from 'googleapis';
-import { OAuth2Client, TokenInfo } from 'google-auth-library';
+import { OAuth2Client } from 'google-auth-library';
 import Redis from "ioredis";
 import progress from "progress-stream";
 import { Readable } from 'stream';
-import { ref } from 'process';
+import { DeleteMessageCommand, ReceiveMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 
 interface UploadVideoParams {
     accessToken: string;
@@ -28,6 +28,8 @@ interface UploadVideoParams {
 export class MediaServiceService implements OnModuleInit {
 
     private s3: S3Client;
+    private sqs: SQSClient;
+    private SQS_url: string | null;
     private bucket: string = "";
     private googleOauthClient: null | OAuth2Client = null;
     private redis: Redis | null;
@@ -41,17 +43,88 @@ export class MediaServiceService implements OnModuleInit {
             this.configService.get<string>("GOOGLE_CLIENT_SECRET"),
             this.configService.get<string>("GOOGLE_REDIRECT_URL")
         );
-    }
 
-    onModuleInit() {
+        this.sqs = new SQSClient({
+            region: "ap-south-1",
+            credentials: {
+                accessKeyId: this.configService.get<string>("SQS_ACCESS_KEY") ?? "",
+                secretAccessKey: this.configService.get<string>("SQS_SECRET_ACCESS_KEY") ?? ""
+            }
+        });
+        this.SQS_url = this.configService.get<string>("SQS_URL") ?? null;
         this.s3 = new S3Client({
             region: this.configService.get<string>("AWS_REGION"),
             credentials: {
                 accessKeyId: this.configService.get<string>("AWS_ACCESS_KEY")!,
                 secretAccessKey: this.configService.get<string>("AWS_SECRET_KEY")!
             }
-        })
+        });
     }
+
+    onModuleInit() {
+        this.startPolling();
+    }
+
+    async startPolling() {
+        while (true) {
+            try {
+                await this.pollForMessages();
+            } catch (err) {
+                console.error('Polling error:', err);
+                await new Promise((res) => setTimeout(res, 5000));
+            }
+        }
+    }
+
+    async pollForMessages() {
+        if (!this.sqs || !this.SQS_url) return;
+
+        const resp = await this.sqs.send(
+            new ReceiveMessageCommand({
+                MaxNumberOfMessages: 5,
+                QueueUrl: this.SQS_url,
+                WaitTimeSeconds: 20,
+            })
+        );
+
+        if (!resp.Messages || resp.Messages.length === 0) return;
+
+        let processedMessageIds = new Set<string>();
+        await Promise.all(
+            resp.Messages.map(async (m) => {
+                try {
+                    if (!m.Body || !m.MessageId) throw new Error("No body in message");
+                    if (processedMessageIds.has(m.MessageId)) {
+                        throw ("message already processed!");
+                    } else {
+                        processedMessageIds.add(m.MessageId);
+                    }
+
+                    const body = JSON.parse(m.Body);
+                    switch (body.cmd) {
+                        case "retry_video-request_upload":
+                            await this.retryVideoRequestUpload(body.data.videoRequestId, body.data.userId);
+                            break;
+                        case "upload_approved_video-request":
+                            await this.uploadVideoRequestToYoutube(body.data.userId, body.data.videoRequestId);
+                            break;
+                        default:
+                            console.warn("Unknown cmd:", body.cmd);
+                    }
+
+                    await this.sqs.send(
+                        new DeleteMessageCommand({
+                            QueueUrl: this.SQS_url!,
+                            ReceiptHandle: m.ReceiptHandle!,
+                        })
+                    );
+                } catch (err) {
+                    console.error("Error processing message:", err);
+                }
+            })
+        );
+    }
+
 
     // DONE
     getYoutubeAuthLink(): string | undefined {
@@ -105,6 +178,8 @@ export class MediaServiceService implements OnModuleInit {
                 id: videoRequestId
             }
         });
+
+        if (videoRequest && videoRequest.uploadStatus != "QUEUED") return;
         if (!videoRequest) return;
 
         return await this.uploadVideoToYouTube({
@@ -118,7 +193,7 @@ export class MediaServiceService implements OnModuleInit {
             description: videoRequest.description,
             thumbnailKey: videoRequest.thumbnail,
             userId
-        })
+        });
     }
 
     // DONE
@@ -314,6 +389,8 @@ export class MediaServiceService implements OnModuleInit {
         const videoRequest = await this.prisma.videoRequest.findUnique({
             where: { id: videoRequestId }
         });
+
+        if (videoRequest && videoRequest.uploadStatus != "QUEUED") return;
 
         const user = await this.prisma.user.findUnique({
             where: {

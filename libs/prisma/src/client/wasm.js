@@ -208,6 +208,7 @@ exports.VideoRequestStatus = exports.$Enums.VideoRequestStatus = {
 };
 
 exports.VideoUploadStatus = exports.$Enums.VideoUploadStatus = {
+  QUEUED: 'QUEUED',
   NOT_APPROVED: 'NOT_APPROVED',
   UPLOAD_STARTED: 'UPLOAD_STARTED',
   VIDEO_UPLOADED: 'VIDEO_UPLOADED',

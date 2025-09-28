@@ -72,6 +72,7 @@ enum VideoRequestStatus {
 }
 
 enum VideoUploadStatus {
+  QUEUED
   NOT_APPROVED
   UPLOAD_STARTED
   VIDEO_UPLOADED
