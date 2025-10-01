@@ -9,6 +9,8 @@ services:
       SERVICE: server
     depends_on:
       - redis  
+    ports:
+      - "8000:8000"
 
   media-service:
     image: 979188187252.dkr.ecr.ap-south-1.amazonaws.com/creatorsync-server:latest
@@ -18,6 +20,8 @@ services:
       SERVICE: media-service
     depends_on:
       - redis
+    ports:
+      - "8001:8001"
 
   redis:
     image: redis:7
