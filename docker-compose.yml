@@ -9,6 +9,7 @@ services:
       SERVICE: server
     depends_on:
       - redis  
+      - media-service
     ports:
       - "8000:8000"
 

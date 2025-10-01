@@ -24,7 +24,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
             {
                 name: "MEDIA_SERVICE",
                 transport: Transport.TCP,
-                options: { host: 'localhost', port: 8001 }
+                options: { host: 'media-service', port: 8001 }
             }
         ])
     ],
