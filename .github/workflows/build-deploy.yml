@@ -70,3 +70,4 @@ jobs:
                     docker rm creator-sync_server_1 || true
                     docker rm creator-sync_redis_1 || true
                     cd ~/creator-sync && gpg --batch --passphrase ${{secrets.GPG_SECRET}} --output '.env' --decrypt 'env.gpg' && docker-compose up -d
+                    docker system prune -f

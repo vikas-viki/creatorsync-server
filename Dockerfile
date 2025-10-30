@@ -15,7 +15,7 @@ RUN npm run prisma:generate
 ENV NODE_ENV=production
 RUN npm run build
 
-FROM node:22-slim AS runner 
+FROM node:22-slim
 
 WORKDIR /app
 
